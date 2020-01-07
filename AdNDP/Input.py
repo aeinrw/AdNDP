@@ -89,4 +89,52 @@ class AdNDP:
         self.__CMOFile = cf.get(sections, "CMOFile")
         self.__ADNDPFile = cf.get(sections, "AdNDPFile")
 
+        j = 0
+        for i in range(self.__NAt):
+            self.__AtBsRng[i][0] = j
+            j += self.__AtBs[i]
+            self.__AtBsRng[i][1] = j
 
+        assert self.__BSz == j, "Size of basis set error!! {:5d} != {:5d}".format(
+            self.__BSz, j)
+
+        # 输入nbo.log文件
+        # try:
+        #     fp = open(nbofile, 'r')
+        # except IOError as err:
+        #     print('File Error:' + str(err))
+
+        dtln = ""
+        with open("../"+nbofile, 'r') as fp:
+            while dtln[:20] != " NAO density matrix:":
+                dtln = fp.readline()
+            dtln = fp.readline()
+            dtln = fp.readline()
+            dtln = fp.readline()
+
+            Resid = self.__BSz
+            k = 0
+            Cnt = 0
+            while Resid > 0:
+
+                if Resid < 8:
+                    Cnt = Resid
+                else:
+                    Cnt = 8
+
+                for i in range(self.__BSz):
+
+                    line = fp.readline()[17:-1].replace('  ', ' ').split(' ')
+                    if line[0] == '':
+                        line.pop(0)
+                    self.__DMNAO[i][8 * k:8 * k + Cnt] = np.array(line, dtype=np.float64)
+                    print(self.__DMNAO[i][8 * k:8 * k + Cnt])
+
+                dtln = fp.readline()
+                dtln = fp.readline()
+                dtln = fp.readline()
+
+                Resid -= Cnt
+                k += 1
+
+            print("Read DMNAO NAOAO matrixs in nbofile OK!")
