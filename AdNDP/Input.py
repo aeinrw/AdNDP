@@ -346,22 +346,20 @@ class AdNDP:
 
 
 
+    def EigenSrt(self):
+
+        p = 0.0
 
 
-
-
-
-    def EigenSrt():
-        pass
-    # GIT
+        # GIT
 
     def Subsets():
         pass
-    # get
+        # get
 
     def Output():
         pass
-    # git
+        # git
 
     def BasisChange():
         pass
