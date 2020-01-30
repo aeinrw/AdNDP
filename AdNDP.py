@@ -64,7 +64,7 @@ def main():
     NAOAO = np.zeros((PBSz, PBSz), dtype=np.float64)
     bond = np.zeros(PNMax, dtype=BOND)
 
-    Input(NAOAO)
+    # Input(NAOAO)
 
 
 def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
@@ -74,21 +74,20 @@ def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
     PrelCtr = np.zeros((PNAt, PNMax), dtype=np.int32)
 
     smode = 0
-    Cnt = 0
+    #Cnt = 0
     PP = 0
-    IndS = 0
-    IndF = 0
+    #IndS = 0
+    #IndF = 0
     NCtr = 0
     AtBlQnt = 0
     AtBl = np.zeros((100000, PNAt), dtype=np.int32)
     CBl = np.zeros(PNAt, dtype=np.int32)
 
     prebond = np.zeros(PNMax, dtype=BOND)
-    b = np.zeros(1, dtype=BOND)
 
     threshold = 0.0
-    vmax = 0.0
-    DUMMY = np.zeros((PBSz, PBSz), dtype=np.float64)
+    #vmax = 0.0
+    #DUMMY = np.zeros((PBSz, PBSz), dtype=np.float64)
     EiVal = np.zeros(PBSz, dtype=np.float64)
     EiVec = np.zeros((PBSz, PBSz), dtype=np.float64)
 
@@ -142,7 +141,7 @@ def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
                 # BlockDMNAO()
                 # EigenSystem()
                 # EIgenSrt()
-                for i range(BSz):
+                for i in range(BSz):
                     if EiVal[i] >= threshold:
                         PrelOcc[PP] = EiVal[i]
                         PrelVec[0:BSz][PP] = EiVec[0:BSz][PP]
@@ -151,4 +150,74 @@ def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
                         debug.write("AtBl ")
                         for j in range(NCtr):
                             debug.write("{:3d}".format(CBl[j]))
-                        debug.write("\nEiVal \n\n")
+                        debug.write("\nEiVal {:f}\n\n".format(EiVal[i]))
+
+            if PP <= 0:
+                print("No bonds found with occ >= {:f}".format(threshold))
+            else:
+                # SortPerl()
+                print(
+                    "********\n\t{:5d} {:3d}-center bonds found with occ = {:f}:".format(PP, NCtr, threshold))
+                for i in range(PP):
+                    b = prebond[i]
+                    print("[{:4d}]**** occ=({:.4f})".fotmat(i, b['occ']))
+                    for j in range(b['nc'][0]):
+                        print("{:3d}({:.3f})  ".format(
+                            b['ctr'][j] + 1, b['vocc'][j]))
+
+            print("Please input the bond indexes to be selected(end with -1):")
+
+            while True:
+                i = int(input())
+                if i < 0:
+                    break
+                b = prebond[i]
+                # DepleteDMNAO(b)
+                bond[NBOAmnt] = b
+                NBOAmnt += 1
+
+            # TraceDMNAO()
+            print(
+                "\n*** {:5d} bonds found, Density residure = {:f}***".fotmat(NBOAmnt, DResid))
+            print("0 --- end the AdNDP program\n")
+            print("1 --- redo AdNDP search\n")
+            print("*** Input you selection(0 or 1): ")
+
+            while True:
+                i = int(input())
+                if i != 0 and i != 1:
+                    print(
+                        "\n*** invalid input, reinput your selection please (o or 1):")
+                    continue
+                else:
+                    break
+
+            if i == 1:
+                continue
+            else:
+                break
+
+    return MnSrch, NBOAmnt, DResid
+
+
+def SortPrel(PrelOcc, PrelVec, PrelCtr, bond, PP, NCtr):
+
+    Cnt1 = 0
+    ThrOcc = 0.0
+    PrelAccpt = np.zeros(PNMax, dtype=np.int32)
+
+    print(" SortPrel OK")
+
+    for j in range(PP):
+        for i in range(PP):
+            if PrelOcc[i] > ThrOcc:
+                ThrOcc = PrelOcc[i]
+                Cnt1 = i
+
+        bond[j]['nc'] = NCtr
+        i = Cnt1
+        bond[j]['occ'] = PrelOcc[i]
+        PrelOcc[i] = -1.0
+        bond[j]['vec'][0:BSz] = PrelVec[0:BSz][i]
+        bond[j]['ctr'][0:NCtr] = PrelCtr[0:NCtr][i]
+        calbond(bond[j])
