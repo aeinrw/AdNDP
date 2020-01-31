@@ -160,7 +160,7 @@ def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
                     "********\n\t{:5d} {:3d}-center bonds found with occ = {:f}:".format(PP, NCtr, threshold))
                 for i in range(PP):
                     b = prebond[i]
-                    print("[{:4d}]**** occ=({:.4f})".fotmat(i, b['occ']))
+                    print("[{:4d}]**** occ=({:.4f})".format(i, b['occ'][0]))
                     for j in range(b['nc'][0]):
                         print("{:3d}({:.3f})  ".format(
                             b['ctr'][j] + 1, b['vocc'][j]))
@@ -176,9 +176,9 @@ def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
                 bond[NBOAmnt] = b
                 NBOAmnt += 1
 
-            # TraceDMNAO()
+            DResid = DMNAO[BSz][BSz].trace()
             print(
-                "\n*** {:5d} bonds found, Density residure = {:f}***".fotmat(NBOAmnt, DResid))
+                "\n*** {:5d} bonds found, Density residure = {:f}***".format(NBOAmnt, DResid))
             print("0 --- end the AdNDP program\n")
             print("1 --- redo AdNDP search\n")
             print("*** Input you selection(0 or 1): ")
@@ -214,10 +214,74 @@ def SortPrel(PrelOcc, PrelVec, PrelCtr, bond, PP, NCtr):
                 ThrOcc = PrelOcc[i]
                 Cnt1 = i
 
-        bond[j]['nc'] = NCtr
+        bond[j]['nc'][0] = NCtr
         i = Cnt1
-        bond[j]['occ'] = PrelOcc[i]
+        bond[j]['occ'][0] = PrelOcc[i]
         PrelOcc[i] = -1.0
         bond[j]['vec'][0:BSz] = PrelVec[0:BSz][i]
         bond[j]['ctr'][0:NCtr] = PrelCtr[0:NCtr][i]
         calbond(bond[j])
+
+
+def DepleteDMNAO(b):
+
+    global DMNAO
+
+    for i in range(BSz):
+        for j in range(BSz):
+            DMNAO[i, j] -= b['occ'][0] * b['vec'][j] * b['vec'][i]
+
+
+def BlockDMNAO(CBl, NCtr, DUMMY):
+    flag = np.zeros(PBSz, dtype=np.bool)
+    for l in range(NCtr):
+        n1 = AtBsRng[CBl[l]][0]
+        n2 = AtBsRng[CBl[l]][1]
+        for i in range(n1, n2):
+            flag[i] = True
+
+    for i in range(BSz):
+        for j in range(BSz):
+            if (flag[i] and flag[j]):
+                DUMMY[i][j] = DMNAO[i][j]
+            else:
+                DUMMY[i][j] = 0.0
+
+
+def EigenSystem(DUMMY, EiVal, EiVec):
+    pass
+
+
+def EigenSrt(d, v, n):
+    p = 0.0
+
+    for i in range(n - 1):
+        k = i
+        p = d[i]
+        for j in range(i + 1, n):
+            if d[j] >= p:
+                k = j
+                p = d[j]
+
+        if k != i:
+            d[k] = d[i]
+            d[i] = p
+            for j in range(n):
+                v[j, k], v[j, i] = v[j, i], v[j, k]
+
+
+def Subsets(AtBl, NLn, NClmn, NAt):
+
+    if NClmn == NAt:
+        for j in range(NAt):
+            AtBl[0, j] = j
+        AtBl[0, NAt] = -1
+        NLn = 1
+        return NLn
+
+    if NClmn == 1:
+        for i in range(NAt):
+            AtBl[i, 0] = i
+            AtBl[i, 1] = -1
+        NLn = NAt
+        return NLn

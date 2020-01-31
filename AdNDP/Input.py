@@ -278,34 +278,35 @@ class AdNDP:
 
         sm = 0.0
         for i in range(1, 101):
-            sm = np.sum(np.triu(np.fabs(DUMMY[:self.BSz,:self.BSz]), 1))
+            sm = np.sum(np.triu(np.fabs(DUMMY[:self.BSz, :self.BSz]), 1))
             assert sm != 0.0, "sm = 0.0"
 
             print("EigenSystem: loop= {:4d},sum= {:lf}".format(i, sm))
 
             if i < 4:
                 tresh = 0.2 * sm / (self.BSz ** 2)
-            else
+            else:
                 tresh = 0.0
 
             for ip in range(self.BSz - 1):
-                for iq in range(ip + 1: self.BSz):
-                    g = 100.0 * fabs(a[ip][iq])
-                    if i > 4 and np.fabs(EiVal[ip]) + g == np.fabs(EiVal[ip])) and np.fabs(EiVal[iq]) + g == fabs(EiVal[iq]):
+                for iq in range((ip + 1), self.BSz):
+                    g = 100.0 * np.fabs(DUMMY[ip][iq])
+                    if i > 4 and (np.fabs(EiVal[ip]) + g == np.fabs(EiVal[ip])) and (np.fabs(EiVal[iq]) + g == fabs(EiVal[iq])):
                         DUMMY[ip][iq] = 0.0
                     elif np.fabs(DUMMY[ip][iq] > tresh):
                         h = EiVal[iq] - EiVal[ip]
                         if np.fabs(h) + g == np.fabs(h):
-                            t = a[ip][iq] / h
+                            t = DUMMY[ip][iq] / h
                         else:
-                            theta = 0.5 * h / a[ip][iq]
-                            t = 1.0 / (np.fabs(theta) + np.sqrt(1.0+ theta ** 2))
+                            theta = 0.5 * h / DUMMY[ip][iq]
+                            t = 1.0 / (np.fabs(theta) +
+                                       np.sqrt(1.0 + theta ** 2))
                             if theta < 0.0:
                                 t = -t
 
                         c = 1.0 / np.sqrt(1 + t ** 2)
                         s = t * c
-                        tau = s / (1.0+ c)
+                        tau = s / (1.0 + c)
                         h = t * DUMMY[ip][iq]
                         z[ip] = z[ip] - h
                         z[iq] = z[iq] + h
@@ -319,13 +320,13 @@ class AdNDP:
                             DUMMY[j][ip] = g - s * (h + g * tau)
                             DUMMY[j][iq] = h + s * (g - h * tau)
 
-                        for j in range(ip+1,iq):
+                        for j in range(ip+1, iq):
                             g = DUMMY[ip][j]
                             h = DUMMY[j][iq]
                             DUMMY[ip][j] = g - s * (h + g * tau)
                             DUMMY[j][iq] = h + s * (g - h * tau)
 
-                        for j in range(iq+1,self.BSz):
+                        for j in range(iq+1, self.BSz):
                             g = DUMMY[ip][j]
                             h = DUMMY[iq][j]
                             DUMMY[ip][j] = g - s * (h + g * tau)
@@ -344,12 +345,9 @@ class AdNDP:
 
         print("\n****************\nToo many iterations in jacobi\n*************\n")
 
-
-
     def EigenSrt(self):
 
         p = 0.0
-
 
         # GIT
 
