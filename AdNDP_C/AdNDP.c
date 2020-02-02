@@ -270,7 +270,7 @@ void BlockDMNAO(int CBl[PNAt], int NCtr, double DUMMY[PBSz][PBSz])
 }
 
 //!************************************************************************
-void System(double a[PBSz][PBSz], int n, double d[PBSz], double v[PBSz][PBSz])
+void EigenSystem(double a[PBSz][PBSz], int n, double d[PBSz], double v[PBSz][PBSz])
 {
 	//! a  - real symmetric matrix
 	//! n  - size of a
