@@ -64,7 +64,8 @@ def main():
     NAOAO = np.zeros((PBSz, PBSz), dtype=np.float64)
     bond = np.zeros(PNMax, dtype=BOND)
 
-    # Input(NAOAO)
+    Input(NAOAO)
+    AdNBO(MnSrch, bond, NBOAmnt, DResid)
 
 
 def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
@@ -87,9 +88,9 @@ def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
 
     threshold = 0.0
     #vmax = 0.0
-    #DUMMY = np.zeros((PBSz, PBSz), dtype=np.float64)
+    DUMMY = np.zeros((PBSz, PBSz), dtype=np.float64)
     EiVal = np.zeros(PBSz, dtype=np.float64)
-    EiVec = np.zeros((PBSz, PBSz), dtype=np.float64)
+    EiVec = np.eye((PBSz, PBSz), dtype=np.float64)
 
     with open("out_debug", 'w') as debug:
 
@@ -126,7 +127,7 @@ def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
             if smode == 1:
                 print(
                     "Searching for all possible {:d}-center bonds ......".format(NCtr))
-                # Subsets(AtBl,...)
+                Subsets(AtBl,AtBlQnt,NCtr,NAt)
 
             if smode == 2:
                 AtBlQnt = 1
@@ -138,9 +139,9 @@ def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
 
             for k in range(AtBlQnt):
                 CBl[0:NCtr] = AtBl[k][0:NCtr]
-                # BlockDMNAO()
-                # EigenSystem()
-                # EIgenSrt()
+                BlockDMNAO(CBl,NCtr,DUMMY)
+                EigenSystem(DUMMY,BSz,EiVal,EiVec)
+                EigenSrt(EiVal,EiVec,BSz)
                 for i in range(BSz):
                     if EiVal[i] >= threshold:
                         PrelOcc[PP] = EiVal[i]
@@ -155,7 +156,7 @@ def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
             if PP <= 0:
                 print("No bonds found with occ >= {:f}".format(threshold))
             else:
-                # SortPerl()
+                SortPerl(PrelOcc,PrelVec,PrelCtr,PP,NCtr,prebond)
                 print(
                     "********\n\t{:5d} {:3d}-center bonds found with occ = {:f}:".format(PP, NCtr, threshold))
                 for i in range(PP):
@@ -172,7 +173,7 @@ def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
                 if i < 0:
                     break
                 b = prebond[i]
-                # DepleteDMNAO(b)
+                DepleteDMNAO(b)
                 bond[NBOAmnt] = b
                 NBOAmnt += 1
 
@@ -204,7 +205,7 @@ def SortPrel(PrelOcc, PrelVec, PrelCtr, bond, PP, NCtr):
 
     Cnt1 = 0
     ThrOcc = 0.0
-    PrelAccpt = np.zeros(PNMax, dtype=np.int32)
+    #PrelAccpt = np.zeros(PNMax, dtype=np.int32)
 
     print(" SortPrel OK")
 
@@ -248,8 +249,83 @@ def BlockDMNAO(CBl, NCtr, DUMMY):
                 DUMMY[i][j] = 0.0
 
 
-def EigenSystem(DUMMY, EiVal, EiVec):
-    pass
+def EigenSystem(a, n, d, v):
+
+    b = np.zeros(n, dtype=np.float64)
+    z = np.zeros(n, dtype=np.float64)
+
+    for i in range(n):
+        b[i] = a[i, i]
+        d[i] = b[i]
+
+    sm = 0.0
+    for i in range(1, 101):
+        sm = np.sum(np.triu(np.fabs(a[:n, :n]), 1))
+        assert sm != 0.0, "sm = 0.0"
+
+        #print("EigenSystem: loop= {:4d},sum= {:lf}".format(i, sm))
+
+        if i < 4:
+            tresh = 0.2 * sm / (n ** 2)
+        else:
+            tresh = 0.0
+
+        for ip in range(n - 1):
+            for iq in range((ip + 1), n):
+                g = 100.0 * np.fabs(a[ip][iq])
+                if i > 4 and (np.fabs(d[ip]) + g == np.fabs(d[ip])) and (np.fabs(d[iq]) + g == fabs(d[iq])):
+                    a[ip][iq] = 0.0
+                elif np.fabs(a[ip][iq] > tresh):
+                    h = d[iq] - d[ip]
+                    if np.fabs(h) + g == np.fabs(h):
+                        t = a[ip][iq] / h
+                    else:
+                        theta = 0.5 * h / a[ip][iq]
+                        t = 1.0 / (np.fabs(theta) +
+                                   np.sqrt(1.0 + theta ** 2))
+                        if theta < 0.0:
+                            t = -t
+
+                    c = 1.0 / np.sqrt(1 + t ** 2)
+                    s = t * c
+                    tau = s / (1.0 + c)
+                    h = t * a[ip][iq]
+                    z[ip] = z[ip] - h
+                    z[iq] = z[iq] + h
+                    d[ip] = d[ip] - h
+                    d[iq] = d[iq] + h
+                    a[ip][iq] = 0.0
+
+                    for j in range(ip):
+                        g = a[j][ip]
+                        h = a[j][iq]
+                        a[j][ip] = g - s * (h + g * tau)
+                        a[j][iq] = h + s * (g - h * tau)
+
+                    for j in range(ip+1, iqE):
+                        g = a[ip][j]
+                        h = a[j][iq]
+                        a[ip][j] = g - s * (h + g * tau)
+                        a[j][iq] = h + s * (g - h * tau)
+
+                    for j in range(iq+1, n):
+                        g = a[ip][j]
+                        h = a[iq][j]
+                        a[ip][j] = g - s * (h + g * tau)
+                        a[iq][j] = h + s * (g - h * tau)
+
+                    for j in range(n):
+                        g = v[j][ip]
+                        h = v[j][iq]
+                        v[j][ip] = g - s * (h + g * tau)
+                        v[j][iq] = h + s * (g - h * tau)
+
+        for ip in range(n):
+            b[ip] = b[ip] + z[ip]
+            d[ip] = b[ip]
+            z[ip] = 0.0
+
+    print("\n****************\nToo many iterations in jacobi\n*************\n")
 
 
 def EigenSrt(d, v, n):
@@ -285,3 +361,57 @@ def Subsets(AtBl, NLn, NClmn, NAt):
             AtBl[i, 1] = -1
         NLn = NAt
         return NLn
+
+    Done = 0
+    NLn = 1
+
+    for j in range(NClmn):
+        AtBl[NLn - 1, j] = j
+
+    while (True):
+        for k in range(NClmn):
+            if AtBl[NLn - 1, k] == (NAt - NClmn + k):
+                Done = k + 1
+                break
+
+        if Done == 1:
+            return NLn
+        if Done == 0:
+            NLn += 1
+            for k in range(NClmn - 1):
+                AtBl[NLn - 1, k] = AtBl[NLn - 2, k]
+            if AtBl[NLn - 2, NClmn - 1] < NAt:
+                AtBl[NLn - 1, NClmn - 1] = AtBl[NLn - 2, NClmn - 1] + 1
+            else:
+                NLn += 1
+                for k in range(Done - 2):
+                    AtBl[NLn - 1, k] = AtBl[NLn - 2, k]
+                AtBl[NLn - 1, Done - 2] = AtBl[NLn - 2, Done - 2] + 1
+                for k in range(Done - 1, NClmn):
+                    AtBl[NLn - 1, k] = AtBl[NLn - 1, k - 1] + 1
+                Done = 0
+
+
+def Input(self):
+
+    # 输入AdNDP.ini文件
+    import configparser
+    cf = configparser.ConfigParser()
+    cf.read(self.__INIFile)
+    sections = cf.sections()[0]
+    nbofile = cf.get(sections, "nbofile")
+    self.NAt = cf.getint(sections, "NAt")
+    self.NVal = cf.getint(sections, "NVal")
+    self.NTot = cf.getint(sections, "NTot")
+    self.BSz = cf.getint(sections, "BSz")
+    self.__AtBs[0:self.NAt] = np.array(
+        cf.get(sections, "AtBs").split(','), dtype=np.int32)
+    self.__Thr[0:self.NAt] = np.array(
+        cf.get(sections, "Thr").split(','), dtype=np.float64)
+    self.__CMOFile = cf.get(sections, "CMOFile")
+    self.__ADNDPFile = cf.get(sections, "AdNDPFile")
+
+
+
+if __name__ == '__main__':
+    main()
