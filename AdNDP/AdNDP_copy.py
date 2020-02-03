@@ -3,8 +3,10 @@ import numpy as np
 PNAt = 128
 PNVl = 9
 PNTot = 15
-PNMax = 1024
+PNMax = 2048
 PBSz = 1024
+
+de=0
 
 '''
 ! NAt - number of atoms
@@ -140,9 +142,9 @@ def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
                 if PP > 0:
                     print("PP=", PP)
                     print("NCtr=",NCtr)
-                    print(AtBl[:PP][:NCtr].shape)
-                    print(PrelCtr[:NCtr][:PP].shape)
-                    AtBl[:PP][:NCtr] = PrelCtr[:NCtr][:PP].T
+                    print((AtBl[:PP,:NCtr]).shape)
+                    print((PrelCtr[:NCtr,:PP]).shape)
+                    AtBl[:PP,:NCtr] = PrelCtr[:NCtr,:PP].T
                     AtBlQnt = PP
                     print("***AtBlQnt: {:5d}".format(AtBlQnt))
 
@@ -230,8 +232,10 @@ def EigenSystem(a, n, d, v):
         b[i] = a[i, i]
         d[i] = b[i]
 
+
     sm = 0.0
     for i in range(1, 101):
+        sm = 0.0
         sm = np.sum(np.triu(np.fabs(a[:n, :n]), 1))
         if sm == 0.0:
             return 0
@@ -243,17 +247,25 @@ def EigenSystem(a, n, d, v):
         else:
             tresh = 0.0
 
+
         for ip in range(n - 1):
             for iq in range((ip + 1), n):
-                g = 100.0 * np.fabs(a[ip][iq])
-                if i > 4 and (np.fabs(d[ip]) + g == np.fabs(d[ip])) and (np.fabs(d[iq]) + g == np.fabs(d[iq])):
-                    a[ip][iq] = 0.0
-                elif np.fabs(a[ip][iq] > tresh):
+                g = 100.0 * np.fabs(a[ip,iq])
+
+                prt.write("i={},ip={},iq={},g={:12f},a[3,12]={:12f}\n".format(i,ip,iq,g,a[3,12]))
+
+
+                if (i > 4 and (np.fabs(d[ip]) + g == np.fabs(d[ip])) and (np.fabs(d[iq]) + g == np.fabs(d[iq]))):
+                    a[ip,iq] = 0.0
+                elif np.fabs(a[ip,iq] > tresh):
+
+
+
                     h = d[iq] - d[ip]
                     if np.fabs(h) + g == np.fabs(h):
-                        t = a[ip][iq] / h
+                        t = a[ip,iq] / h
                     else:
-                        theta = 0.5 * h / a[ip][iq]
+                        theta = 0.5 * h / a[ip,iq]
                         t = 1.0 / (np.fabs(theta) +
                                    np.sqrt(1.0 + theta ** 2))
                         if theta < 0.0:
@@ -262,7 +274,7 @@ def EigenSystem(a, n, d, v):
                     c = 1.0 / np.sqrt(1 + t ** 2)
                     s = t * c
                     tau = s / (1.0 + c)
-                    h = t * a[ip][iq]
+                    h = t * a[ip,iq]
                     z[ip] = z[ip] - h
                     z[iq] = z[iq] + h
                     d[ip] = d[ip] - h
@@ -270,28 +282,29 @@ def EigenSystem(a, n, d, v):
                     a[ip][iq] = 0.0
 
                     for j in range(ip):
-                        g = a[j][ip]
-                        h = a[j][iq]
-                        a[j][ip] = g - s * (h + g * tau)
-                        a[j][iq] = h + s * (g - h * tau)
+                        g = a[j,ip]
+                        h = a[j,iq]
+                        a[j,ip] = g - s * (h + g * tau)
+                        a[j,iq] = h + s * (g - h * tau)
 
                     for j in range(ip+1, iq):
-                        g = a[ip][j]
-                        h = a[j][iq]
-                        a[ip][j] = g - s * (h + g * tau)
-                        a[j][iq] = h + s * (g - h * tau)
+                        g = a[ip,j]
+                        h = a[j,iq]
+                        a[ip,j] = g - s * (h + g * tau)
+                        a[j,iq] = h + s * (g - h * tau)
 
                     for j in range(iq+1, n):
-                        g = a[ip][j]
-                        h = a[iq][j]
-                        a[ip][j] = g - s * (h + g * tau)
-                        a[iq][j] = h + s * (g - h * tau)
+                        g = a[ip,j]
+                        h = a[iq,j]
+                        a[ip,j] = g - s * (h + g * tau)
+                        a[iq,j] = h + s * (g - h * tau)
 
                     for j in range(n):
-                        g = v[j][ip]
-                        h = v[j][iq]
-                        v[j][ip] = g - s * (h + g * tau)
-                        v[j][iq] = h + s * (g - h * tau)
+                        g = v[j,ip]
+                        h = v[j,iq]
+                        v[j,ip] = g - s * (h + g * tau)
+                        v[j,iq] = h + s * (g - h * tau)
+
 
         for ip in range(n):
             b[ip] = b[ip] + z[ip]
@@ -372,7 +385,7 @@ def Subsets(AtBl, NLn, NClmn, NAt):
 
 def Input(NAOAO):
 
-    global NAt,NTot,BSz,AtBs,Thr,CMOFile,AdNDPFile
+    global NAt,NTot,BSz,AtBs,Thr,CMOFile,AdNDPFile,DMNAO
 
     import configparser
     cf = configparser.ConfigParser()
@@ -477,4 +490,6 @@ def Input(NAOAO):
 
 
 if __name__ == '__main__':
+    prt=open("print.txt","w")
     main()
+    prt.close()
