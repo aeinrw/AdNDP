@@ -91,6 +91,7 @@ def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
     EiVal = np.zeros(BSz, dtype=np.float64)
     EiVec = np.eye(BSz, dtype=np.float64)
 
+
     with open("out_debug", 'w') as fp:
 
         print("Welcome to AdNDP-manual program v3.0, revised by Ran-wei")
@@ -99,43 +100,32 @@ def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
 
         for NCtr in range(1,NAt+1):
             threshold = Thr[NCtr-1]
-            if threshold == 0:
+            if threshold == 0.0:
                 print("skippint NCtr= ", NCtr)
                 continue
 
-            if (MnSrch == 0):
+            if MnSrch == 0:
                 AtBlQnt = Subsets(AtBl, AtBlQnt, NCtr, NAt)
-            print("NCtr={0:3d},AtBlQnt={1:6d}".format(NCtr, AtBlQnt))
-            PP = 0
+            #print("NCtr={:d},AtBlQnt={:d}".format(NCtr, AtBlQnt))
 
+            PP = 0
             Cnt = 1
-            while (1):
+            while True:
                 for k in range(AtBlQnt):
                     CBl[:NCtr] = AtBl[k][:NCtr]
+
                     BlockDMNAO(CBl, NCtr, DUMMY)
--------------------------------------------------
+
                     value,vector = np.linalg.eig(DUMMY)
-                    value = np.real(value)
-                    vector = np.real(vector)
-
-                    print(vector[:,np.argmax(value)])
-
-                    #排序
-                    index = np.argsort(-value)
-                    EiVal = value[index]
-                    EiVec = vector[:,index]
-
-
-                    vmax = EiVal[0]
-                    imax = 0
-
-                    print(EiVec[:,0])
-                    de = input()
+                    EiVal = np.real(value)
+                    EiVec = np.real(vector)
+                    imax = np.argmax(EiVal)
+                    vmax = EiVal[imax]
 
 
                     if np.fabs(vmax - 2.0) <= threshold:
                         PrelOcc[PP] = EiVal[imax]
-                        PrelVec[:BSz,PP] = EiVec[:BSz,imax]
+                        PrelVec[:,PP] = EiVec[:,imax]
                         PrelCtr[:NCtr,PP] = CBl[:NCtr]
                         PP += 1
                         fp.write("AtBl ")
@@ -148,28 +138,30 @@ def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
                     AtBl[:PP,:NCtr] = PrelCtr[:NCtr,:PP].T
                     AtBlQnt = PP
                     print("***AtBlQnt: {:5d}".format(AtBlQnt))
-
-
-
-
-
                     IndF = SortPrel(PrelOcc, PrelVec, PrelCtr, PP, NBOOcc, NBOVec,NBOVec,NCtr,IndF)
-
-
                     DepleteDMNAO(NBOOcc, NBOVec, IndS, IndF)
+
                     DResid = DMNAO.trace()
-                    #print([DMNAO[i,i] for i in range(BSz)])
+
+                    # a,_=np.linalg.eig(DMNAO)
+                    # a=np.real(a)
+                    # print("----------->a=",np.max(a))
+
+                    # input()
+
 
 
                     IndS = IndF
                     NBOAmnt = IndF
-                    print("PP={:4d},Indf={:4d},IndF={:4d},NBOAmnt={:4d}".format(
-                        PP, IndS, IndF, NBOAmnt))
+                    print("PP={:d},Indf={:d},IndF={:d},NBOAmnt={:d},Cnt={:d}".format(
+                        PP, IndS, IndF, NBOAmnt,Cnt))
                     PP = 0
                 else:
                     break
+
                 if Cnt > 20:
                     break
+
 
     return MnSrch, NBOAmnt, DResid
 
@@ -182,34 +174,25 @@ def SortPrel(PrelOcc, PrelVec, PrelCtr, PP, NBOOcc,NBOVec,NBOCtr,NCtr_,IndF):
     PrelAccpt = np.zeros(PNMax, dtype=np.int32)
 
 
-    print(" SortPrel OK")
-    # for i in range(PP):
-    #     if (int)(PrelOcc[i] * 100000) > (int)(ThrOcc * 100000):
-    #         ThrOcc = (int)(PrelOcc[i] * 100000) / 100000.0
-    #         Cnt1 = 0
-    #         PrelAccpt[Cnt1] = i
-    #         Cnt1 += 1
-    #         print("A Ctr= ", PrelCtr[:NCtr_,i] + 1,end='')
-    #         print(" ***ThrOcc= {:.5f}".format(ThrOcc))
-    #     elif (int)(PrelOcc[i] * 100000) == (int)(ThrOcc * 100000):
-    #         PrelAccpt[Cnt1] = i
-    #         Cnt1 += 1
-    #         print("A Ctr= ", PrelCtr[:NCtr_,i] + 1,end='')
-    #         print(" ***ThrOcc= {:.5f}".format(ThrOcc))
 
+    print(" SortPrel OK")
     PrelAccpt=np.argsort(-PrelOcc)
     PrelOcc_sorted = PrelOcc[PrelAccpt]
-    while PrelOcc_sorted[Cnt1]==PrelOcc_sorted[Cnt1-1]:
+
+    while int(PrelOcc_sorted[Cnt1]*100000)==int(PrelOcc_sorted[Cnt1-1]*100000):
         Cnt1+=1
+
+    print("Ctr=",PrelCtr[:,PrelAccpt[0]]+1)
+    print("ThrOcc=",PrelOcc[PrelAccpt[0]])
 
 
 
     for j in range(Cnt1):
         i = PrelAccpt[j]
         NBOOcc[IndF] = PrelOcc[i]
-        NBOVec[:BSz,IndF] = PrelVec[:BSz,i]
+        NBOVec[:,IndF] = PrelVec[:,i]
         NBOCtr[:NCtr_,IndF] = PrelCtr[:NCtr_,i]
-        NBOCtr[NCtr_,IndF] = -1
+        #NBOCtr[NCtr_,IndF] = -1
         IndF += 1
 
 
@@ -218,40 +201,29 @@ def SortPrel(PrelOcc, PrelVec, PrelCtr, PP, NBOOcc,NBOVec,NBOCtr,NCtr_,IndF):
 
 def DepleteDMNAO(NBOOcc,NBOVec,IndS,IndF):
 
-    global DMNAO
-
     print("DeleteDMNAO OK")
     for l in range(IndS,IndF):
         for i in range(BSz):
             for j in range(BSz):
-                DMNAO[i, j] -= NBOOcc[l]*NBOVec[j,l]*NBOVec[i,l]
+                    DMNAO[i, j] -= NBOOcc[l]*NBOVec[j,l]*NBOVec[i,l]
+
 
 
 def BlockDMNAO(CBl, NCtr, DUMMY):
-    global DMNAO
-    flag = np.zeros(BSz, dtype=np.bool)
+
+    rng = np.sum(AtBs[:NCtr])
+
+    DUMMY *= 0.0
+
+    DUMMY[:rng]=DMNAO[:rng]
 
 
-    for l in range(NCtr):
-        n1 = AtBsRng[CBl[l]][0]
-        n2 = AtBsRng[CBl[l]][1]
-        for i in range(n1, n2):
-            flag[i] = True
-
-    for i in range(BSz):
-        for j in range(BSz):
-            if (flag[i] and flag[j]):
-                DUMMY[i, j] = DMNAO[i, j]
-            else:
-                DUMMY[i, j] = 0.0
---------------------------------------------------------
 
 def Subsets(AtBl, NLn, NClmn, NAt):
 
     if NClmn == NAt:
         for j in range(NAt):
             AtBl[0, j] = j
-        AtBl[0, NAt] = -1
         NLn = 1
         return NLn
 
