@@ -67,6 +67,33 @@ def main():
 
     MnSrch,NBOAmnt,DResid = AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid)
 
+    with open("result.txt","w") as fp:
+        fp.write("--------------DMNAO----------------\n")
+        for i in range(21):
+            for j in range(21):
+                fp.write("{:f} ".format(DMNAO[i][j]))
+            fp.write("\n")
+        fp.write("---------------NBOOcc--------------\n")
+        for i in range(21):
+            fp.write("{:f} ".format(NBOOcc[i]))
+        fp.write('\n')
+        fp.write("---------------NBOVec---------------\n")
+        for i in range(21):
+            for j in range(21):
+                fp.write("{:f} ".format(NBOVec[i][j]))
+            fp.write("\n")
+        fp.write("---------------NBOCtr---------------\n")
+        for i in range(NAt):
+            for j in range(21):
+                fp.write("{:d} ".format(NBOCtr[i][j]))
+            fp.write("\n")
+        fp.write("---------------Other---------------\n")
+        fp.write("MnSrch={:d}\n".format(MnSrch))
+        fp.write("NBOAmnt={:d}\n".format(NBOAmnt))
+        fp.write("DResid={:f}\n".format(DResid))
+
+
+
 
 def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
 
@@ -106,7 +133,7 @@ def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
 
             if MnSrch == 0:
                 AtBlQnt = Subsets(AtBl, AtBlQnt, NCtr, NAt)
-            #print("NCtr={:d},AtBlQnt={:d}".format(NCtr, AtBlQnt))
+            print("NCtr={:d},AtBlQnt={:d}".format(NCtr, AtBlQnt))
 
             PP = 0
             Cnt = 1
@@ -130,8 +157,11 @@ def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
                         PP += 1
                         fp.write("AtBl ")
                         for j in range(NCtr):
+                            print("{:3d}".format(CBl[j]),end='')
                             fp.write("{:3d}".format(CBl[j]))
                         fp.write("\nEival {:f}\n".format(EiVal[imax]))
+
+
 
                 Cnt += 1
                 if PP > 0:
@@ -142,14 +172,6 @@ def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
                     DepleteDMNAO(NBOOcc, NBOVec, IndS, IndF)
 
                     DResid = DMNAO.trace()
-
-                    # a,_=np.linalg.eig(DMNAO)
-                    # a=np.real(a)
-                    # print("----------->a=",np.max(a))
-
-                    # input()
-
-
 
                     IndS = IndF
                     NBOAmnt = IndF
@@ -166,7 +188,7 @@ def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
     return MnSrch, NBOAmnt, DResid
 
 
-def SortPrel(PrelOcc, PrelVec, PrelCtr, PP, NBOOcc,NBOVec,NBOCtr,NCtr_,IndF):
+def SortPrel(PrelOcc, PrelVec, PrelCtr, PP, NBOOcc,NBOVec,NBOCtr,NCtr,IndF):
 
 
     Cnt1 = 1
@@ -175,29 +197,25 @@ def SortPrel(PrelOcc, PrelVec, PrelCtr, PP, NBOOcc,NBOVec,NBOCtr,NCtr_,IndF):
 
 
 
-    print(" SortPrel OK")
+    print("SortPrel OK")
     PrelAccpt=np.argsort(-PrelOcc)
     PrelOcc_sorted = PrelOcc[PrelAccpt]
 
     while int(PrelOcc_sorted[Cnt1]*100000)==int(PrelOcc_sorted[Cnt1-1]*100000):
         Cnt1+=1
 
-    print("Ctr=",PrelCtr[:,PrelAccpt[0]]+1)
-    print("ThrOcc=",PrelOcc[PrelAccpt[0]])
-
-
+    # print("Ctr=",PrelCtr[:,PrelAccpt[0]]+1)
+    # print("ThrOcc=",PrelOcc[PrelAccpt[0]])
 
     for j in range(Cnt1):
         i = PrelAccpt[j]
         NBOOcc[IndF] = PrelOcc[i]
         NBOVec[:,IndF] = PrelVec[:,i]
-        NBOCtr[:NCtr_,IndF] = PrelCtr[:NCtr_,i]
-        #NBOCtr[NCtr_,IndF] = -1
+        NBOCtr[:NCtr,IndF] = PrelCtr[:NCtr,i]
+        NBOCtr[NCtr,IndF] = -1
         IndF += 1
 
-
     return IndF
-
 
 def DepleteDMNAO(NBOOcc,NBOVec,IndS,IndF):
 
@@ -207,8 +225,6 @@ def DepleteDMNAO(NBOOcc,NBOVec,IndS,IndF):
             for j in range(BSz):
                     DMNAO[i, j] -= NBOOcc[l]*NBOVec[j,l]*NBOVec[i,l]
 
-
-
 def BlockDMNAO(CBl, NCtr, DUMMY):
 
     rng = np.sum(AtBs[:NCtr])
@@ -216,8 +232,6 @@ def BlockDMNAO(CBl, NCtr, DUMMY):
     DUMMY *= 0.0
 
     DUMMY[:rng]=DMNAO[:rng]
-
-
 
 def Subsets(AtBl, NLn, NClmn, NAt):
 
@@ -265,7 +279,6 @@ def Subsets(AtBl, NLn, NClmn, NAt):
                 Done = 0
 
     return NLn
-
 
 def Input(NAOAO):
 
@@ -377,7 +390,6 @@ def Input(NAOAO):
             k += 1
 
         print("Read DMNAO NAOAO matrixs in nbofile OK!")
-
 
 if __name__ == '__main__':
     prt=open("print.txt","w")
