@@ -107,7 +107,7 @@ def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
     IndF = 0
     NCtr = 0
     AtBlQnt = 0
-    AtBl = np.zeros((100000, NAt), dtype=np.int32)
+    AtBl = np.zeros((200, NAt), dtype=np.int32)
     CBl = np.zeros(NAt, dtype=np.int32)
 
     #prebond = np.zeros(PNMax, dtype=BOND)
@@ -133,6 +133,7 @@ def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
 
             if MnSrch == 0:
                 AtBlQnt = Subsets(AtBl, AtBlQnt, NCtr, NAt)
+
             print("NCtr={:d},AtBlQnt={:d}".format(NCtr, AtBlQnt))
 
             PP = 0
@@ -142,6 +143,7 @@ def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
                     CBl[:NCtr] = AtBl[k][:NCtr]
 
                     BlockDMNAO(CBl, NCtr, DUMMY)
+
 
                     value,vector = np.linalg.eig(DUMMY)
                     EiVal = np.real(value)
@@ -160,8 +162,6 @@ def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
                             print("{:3d}".format(CBl[j]),end='')
                             fp.write("{:3d}".format(CBl[j]))
                         fp.write("\nEival {:f}\n".format(EiVal[imax]))
-
-
 
                 Cnt += 1
                 if PP > 0:
@@ -218,20 +218,28 @@ def SortPrel(PrelOcc, PrelVec, PrelCtr, PP, NBOOcc,NBOVec,NBOCtr,NCtr,IndF):
     return IndF
 
 def DepleteDMNAO(NBOOcc,NBOVec,IndS,IndF):
+    global DMNAO
 
     print("DeleteDMNAO OK")
     for l in range(IndS,IndF):
-        for i in range(BSz):
-            for j in range(BSz):
-                    DMNAO[i, j] -= NBOOcc[l]*NBOVec[j,l]*NBOVec[i,l]
+        a = NBOVec[:,l]
+        DMNAO -= NBOOcc[l]*np.outer(a,a)
 
 def BlockDMNAO(CBl, NCtr, DUMMY):
+    flag = np.zeros(BSz, dtype=np.bool)
+    for l in range(NCtr):
+        n1 = AtBsRng[CBl[l],0]
+        n2 = AtBsRng[CBl[l],1]
+        for i in range(n1, n2):
+            flag[i] = True
 
-    rng = np.sum(AtBs[:NCtr])
+    for i in range(BSz):
+        for j in range(BSz):
+            if (flag[i] and flag[j]):
+                DUMMY[i][j] = DMNAO[i][j]
+            else:
+                DUMMY[i][j] = 0.0
 
-    DUMMY *= 0.0
-
-    DUMMY[:rng]=DMNAO[:rng]
 
 def Subsets(AtBl, NLn, NClmn, NAt):
 
@@ -268,15 +276,15 @@ def Subsets(AtBl, NLn, NClmn, NAt):
                 AtBl[NLn - 1, k] = AtBl[NLn - 2, k]
             if AtBl[NLn - 2, NClmn - 1] < NAt:
                 AtBl[NLn - 1, NClmn - 1] = AtBl[NLn - 2, NClmn - 1] + 1
-            else:
-                NLn += 1
-                for k in range(Done - 2):
-                    AtBl[NLn - 1, k] = AtBl[NLn - 2, k]
-                #print("!!",NLn-1,Done-2)
-                AtBl[NLn - 1, Done - 2] = AtBl[NLn - 2, Done - 2] + 1
-                for k in range(Done - 1, NClmn):
-                    AtBl[NLn - 1, k] = AtBl[NLn - 1, k - 1] + 1
-                Done = 0
+        else:
+            NLn += 1
+            for k in range(Done - 2):
+                AtBl[NLn - 1, k] = AtBl[NLn - 2, k]
+            #print("!!",NLn-1,Done-2)
+            AtBl[NLn - 1, Done - 2] = AtBl[NLn - 2, Done - 2] + 1
+            for k in range(Done - 1, NClmn):
+                AtBl[NLn - 1, k] = AtBl[NLn - 1, k - 1] + 1
+            Done = 0
 
     return NLn
 
