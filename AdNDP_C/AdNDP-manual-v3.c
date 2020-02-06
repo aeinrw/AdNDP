@@ -7,7 +7,7 @@
 #include <math.h>
 #include <string.h>
 //#include <stdlib.h>
-#define PNAt 128
+#define NAt 128
 #define PNVl 9
 #define PNTot 15
 #define PNMax 1024
@@ -24,17 +24,17 @@
 
 char CMOFile[256], AdNDPFile[256];
 int NAt, NVal, NTot, BSz;
-int AtBs[PNAt], AtBsRng[PNAt][2];
+int AtBs[NAt], AtBsRng[NAt][2];
 double DMNAO[PBSz][PBSz];
-double Thr[PNAt];
+double Thr[NAt];
 
 typedef struct
 {
 	int nc;
-	int ctr[PNAt];
+	int ctr[NAt];
 	double occ;
 	double vec[PBSz];
-	double vocc[PNAt];
+	double vocc[NAt];
 } BOND;
 
 void calbond(BOND *b)
@@ -54,13 +54,13 @@ void calbond(BOND *b)
 }
 
 void AdNBO(int *MnSrch, BOND bond[PNMax], int *NBOAmnt, double *DResid);
-void SortPrel(double PrelOcc[PNMax], double PrelVec[PBSz][PNMax], int PrelCtr[PNAt][PNMax], int PP, int NCtr, BOND bond[PNMax]);
+void SortPrel(double PrelOcc[PNMax], double PrelVec[PBSz][PNMax], int PrelCtr[NAt][PNMax], int PP, int NCtr, BOND bond[PNMax]);
 void DepleteDMNAO(BOND b);
 void TraceDMNAO(int BSz, double *DResid);
-void BlockDMNAO(int CBl[PNAt], int NCtr, double DUMMY[PBSz][PBSz]);
+void BlockDMNAO(int CBl[NAt], int NCtr, double DUMMY[PBSz][PBSz]);
 void EigenSystem(double a[PBSz][PBSz], int n, double d[PBSz], double v[PBSz][PBSz]);
 void EigenSrt(double d[PBSz], double v[PBSz][PBSz], int n);
-void Subsets(int AtBl[100000][PNAt], int *NLn, int NClmn, int NAt);
+void Subsets(int AtBl[100000][NAt], int *NLn, int NClmn, int NAt);
 void Input(double NAOAO[PBSz][PBSz]);
 void Output(BOND bond[PNMax], int NBOAmnt, double DResid, double NAOAO[PBSz][PBSz]);
 void BasisChange(BOND bond[PNMax], double New[PBSz][PNMax], double Trans[PBSz][PBSz], int Row, int Col);
@@ -73,7 +73,7 @@ void main()
 	double NBOOcc[PNMax], NBOVec[PBSz][PNMax];
 	double NBOVecAO[PBSz][PNMax];
 	double DResid;
-	int NBOCtr[PNAt][PNMax];
+	int NBOCtr[NAt][PNMax];
 	int NBOAmnt;
 	double NAOAO[PBSz][PBSz];
 	BOND bond[PNMax];
@@ -93,13 +93,13 @@ void main()
 void AdNBO(int *MnSrch, BOND bond[PNMax], int *NBOAmnt, double *DResid)
 {
 	double PrelOcc[PNMax], PrelVec[PBSz][PNMax];
-	int PrelCtr[PNAt][PNMax];
+	int PrelCtr[NAt][PNMax];
 
 	int i, j, k, l, m, imax, smode;
 	int Cnt, PP;
 	int IndS, IndF;
 	int NCtr, AtBlQnt;
-	int AtBl[100000][PNAt], CBl[PNAt];
+	int AtBl[100000][NAt], CBl[NAt];
 	BOND prebond[PNMax], b;
 	double threshold, vmax;
 	double DUMMY[PBSz][PBSz];
@@ -247,7 +247,7 @@ void AdNBO(int *MnSrch, BOND bond[PNMax], int *NBOAmnt, double *DResid)
 }
 
 //!************************************************************************
-void SortPrel(double PrelOcc[PNMax], double PrelVec[PBSz][PNMax], int PrelCtr[PNAt][PNMax], int PP, int NCtr, BOND bond[PNMax])
+void SortPrel(double PrelOcc[PNMax], double PrelVec[PBSz][PNMax], int PrelCtr[NAt][PNMax], int PP, int NCtr, BOND bond[PNMax])
 {
 
 	int i, ii, j, jj, k, l, Cnt1;
@@ -304,7 +304,7 @@ void TraceDMNAO(int BSz, double *DResid)
 }
 
 //!************************************************************************
-void BlockDMNAO(int CBl[PNAt], int NCtr, double DUMMY[PBSz][PBSz])
+void BlockDMNAO(int CBl[NAt], int NCtr, double DUMMY[PBSz][PBSz])
 {
 	int i, j, l, n1, n2;
 	int flag[PBSz];
@@ -481,7 +481,7 @@ void EigenSrt(double d[PBSz], double v[PBSz][PBSz], int n)
 } //return
 
 //!************************************************************************
-void Subsets(int AtBl[100000][PNAt], int *NLn, int NClmn, int NAt)
+void Subsets(int AtBl[100000][NAt], int *NLn, int NClmn, int NAt)
 {
 	int i, j, k, n, Done;
 
@@ -700,7 +700,7 @@ void Output(BOND bond[PNMax], int NBOAmnt, double DResid, double NAOAO[PBSz][PBS
 		fwrite(DMNAO[i], sizeof(double), PBSz, fp);
 		fwrite(NAOAO[i], sizeof(double), PBSz, fp);
 	}
-	for (i = 0; i < PNAt; i++)
+	for (i = 0; i < NAt; i++)
 		fwrite(AtBsRng[i], sizeof(int), 2, fp);
 
 	fwrite(&BSz, sizeof(int), 1, fp);

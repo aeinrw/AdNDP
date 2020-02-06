@@ -68,12 +68,14 @@ void main()
 //************************************************************************
 void AdNBO(int *MnSrch, double NBOOcc[PNMax], double NBOVec[PBSz][PNMax], int NBOCtr[PNAt][PNMax], int *NBOAmnt, double *DResid)
 {
+	//prel初步的
 	double PrelOcc[PNMax], PrelVec[PBSz][PNMax];
 	int PrelCtr[PNAt][PNMax];
 
 	int i, j, k, l, m, imax;
 	int Cnt, PP;
 	int IndS, IndF;
+	//NCtr counter
 	int NCtr, AtBlQnt;
 	int AtBl[100000][PNAt], CBl[PNAt];
 	double threshold, vmax;
@@ -272,15 +274,16 @@ void BlockDMNAO(int CBl[PNAt], int NCtr, double DUMMY[PBSz][PBSz])
 //!************************************************************************
 void EigenSystem(double a[PBSz][PBSz], int n, double d[PBSz], double v[PBSz][PBSz])
 {
-	//! a  - real symmetric matrix
-	//! n  - size of a
+	//! a  - real symmetric matrix 实对称矩阵
+	//! n  - size of a	矩阵大小
 	//! np - size of the physical array storing a - replaced by PBSz
-	//! d  - returns evalues of a in first n elements
-	//! v  - contains normalized evectors of a in columns */
+	//! d  - returns evalues of a in first n elements  特征值
+	//! v  - contains normalized evectors of a in columns */ 归一化的特征向量
 
 	int i, ip, iq, j;
 	double c, g, h, s, sm, t, tau, theta, tresh, b[PBSz], z[PBSz];
 
+	//把v定义为一个单位矩阵
 	for (ip = 0; ip < n; ip++)
 	{
 		for (iq = 0; iq < n; iq++)
@@ -290,28 +293,35 @@ void EigenSystem(double a[PBSz][PBSz], int n, double d[PBSz], double v[PBSz][PBS
 		v[ip][ip] = 1.0;
 	}
 
-	for (ip = 0; ip < n; ip++)
+	//b为a的对角的值 d也为对角的值
+  	for (ip = 0; ip < n; ip++)
 	{
 		b[ip] = a[ip][ip];
 		d[ip] = b[ip];
 		z[ip] = 0.0;
 	}
 
+
 	for (i = 1; i <= 100; i++)
 	{
 		sm = 0.0;
+		//求矩阵的绝对值的和
 		for (ip = 0; ip < n - 1; ip++)
 			for (iq = ip + 1; iq < n; iq++)
 				sm += fabs(a[ip][iq]);
+		//如果为0矩阵
 		if (sm == 0.0)
 			return;
 		//		printf("EigenSystem: loop %4d, sum= %lf\n",i,sm);
 
+		//前3次
 		if (i < 4)
+			//平均值的0.2
 			tresh = 0.2 * sm / (n * n);
 		else
 			tresh = 0.0;
 
+		//上半矩阵
 		for (ip = 0; ip < n - 1; ip++)
 		{
 			for (iq = ip + 1; iq < n; iq++)
@@ -322,27 +332,30 @@ void EigenSystem(double a[PBSz][PBSz], int n, double d[PBSz], double v[PBSz][PBS
 				else if (fabs(a[ip][iq]) > tresh)
 				{
 					h = d[iq] - d[ip];
+
 					if (fabs(h) + g == fabs(h))
 					{
 						t = a[ip][iq] / h;
 					}
 					else
 					{
+						//t为tan(4)
 						theta = 0.5 * h / a[ip][iq];
 						t = 1.0 / (fabs(theta) + sqrt(1.0 + theta * theta));
 						if (theta < 0.0)
 							t = -t;
 					}
-					c = 1.0 / sqrt(1 + t * t);
-					s = t * c;
-					tau = s / (1.0 + c);
-					h = t * a[ip][iq];
+					c = 1.0 / sqrt(1 + t * t);	//cos(4)
+					s = t * c;		//sin(4)
+					tau = s / (1.0 + c); //tan(4/2)
+					h = t * a[ip][iq];	//tan(4)*a(pq)
 					z[ip] = z[ip] - h;
 					z[iq] = z[iq] + h;
 					d[ip] = d[ip] - h;
 					d[iq] = d[iq] + h;
 					a[ip][iq] = 0.0;
 
+					//
 					for (j = 0; j <= ip - 1; j++)
 					{
 						g = a[j][ip];
@@ -422,16 +435,20 @@ void EigenSrt(double d[PBSz], double v[PBSz][PBSz], int n)
 //!************************************************************************
 void Subsets(int AtBl[100000][PNAt], int *NLn, int NClmn, int NAt)
 {
+	//AtBlQnt->NLn , NCtr->NClmn
 	int i, j, k, n, Done;
 
+	//到最后一个原子
 	if (NClmn == NAt)
 	{
 		for (j = 0; j < NAt; j++)
 			AtBl[0][j] = j;
 		AtBl[0][j] = -1;
+		//AtBlQnt = 1
 		*NLn = 1;
 		return;
 	}
+	//第一个原子
 	if (NClmn == 1)
 	{
 		for (i = 0; i < NAt; i++)

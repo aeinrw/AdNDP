@@ -1,6 +1,6 @@
 import numpy as np
 
-PNAt = 128
+NAt = 128
 PNVl = 9
 PNTot = 15
 PNMax = 1024
@@ -22,14 +22,14 @@ NAt = 0
 NVal = 0
 NTot = 0
 BSz = 0
-AtBs = np.zeros(PNAt, dtype=np.int32)
-AtBsRng = np.zeros((PNAt, 2), dtype=np.int32)
+AtBs = np.zeros(NAt, dtype=np.int32)
+AtBsRng = np.zeros((NAt, 2), dtype=np.int32)
 DMNAO = np.zeros((PBSz, PBSz), dtype=np.float64)
-Thr = np.zeros(PNAt, dtype=np.float64)
+Thr = np.zeros(NAt, dtype=np.float64)
 
 # (1,)
 BOND = np.dtype([('nc', np.int32, (1,)),
-                 ('ctr', np.int32, (PNAt,)),
+                 ('ctr', np.int32, (NAt,)),
                  ('occ', np.float64, (1,)),
                  ('vec', np.float64, (PBSz,)),
                  ('vocc', np.float64, (PBSz,))])
@@ -58,7 +58,7 @@ def main():
 
     DResid = 0.0
 
-    NBOCtr = np.zeros((PNAt, PNMax), dtype=np.int32)
+    NBOCtr = np.zeros((NAt, PNMax), dtype=np.int32)
     NBOAmnt = 0
 
     NAOAO = np.zeros((PBSz, PBSz), dtype=np.float64)
@@ -72,7 +72,7 @@ def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
 
     PrelOcc = np.zeros(PNMax, dtype=np.float64)
     PrelVec = np.zeros((PBSz, PNMax), dtype=np.float64)
-    PrelCtr = np.zeros((PNAt, PNMax), dtype=np.int32)
+    PrelCtr = np.zeros((NAt, PNMax), dtype=np.int32)
 
     smode = 0
     #Cnt = 0
@@ -81,8 +81,8 @@ def AdNBO(MnSrch: int, NBOAmnt: int, DResid: int, bond):
     #IndF = 0
     NCtr = 0
     AtBlQnt = 0
-    AtBl = np.zeros((100000, PNAt), dtype=np.int32)
-    CBl = np.zeros(PNAt, dtype=np.int32)
+    AtBl = np.zeros((100000, NAt), dtype=np.int32)
+    CBl = np.zeros(NAt, dtype=np.int32)
 
     prebond = np.zeros(PNMax, dtype=BOND)
 

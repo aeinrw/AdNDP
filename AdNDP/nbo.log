@@ -4,10 +4,10 @@
  Initial command:
  /opt/Gaussian/g09/l1.exe "/usr/local/g09tmp/Gau-15458.inp" -scrdir="/usr/local/g09tmp/"
  Entering Link 1 = /opt/Gaussian/g09/l1.exe PID=     15459.
-  
+
  Copyright (c) 1988,1990,1992,1993,1995,1998,2003,2009,2015,
             Gaussian, Inc.  All Rights Reserved.
-  
+
  This is part of the Gaussian(R) 09 program.  It is based on
  the Gaussian(R) 03 system (copyright 2003, Gaussian, Inc.),
  the Gaussian(R) 98 system (copyright 1998, Gaussian, Inc.),
@@ -19,28 +19,28 @@
  University), and the Gaussian 82(TM) system (copyright 1983,
  Carnegie Mellon University). Gaussian is a federally registered
  trademark of Gaussian, Inc.
-  
+
  This software contains proprietary and confidential information,
  including trade secrets, belonging to Gaussian, Inc.
-  
+
  This software is provided under written license and may be
  used, copied, transmitted, or stored only in accord with that
  written license.
-  
+
  The following legend is applicable only to US Government
  contracts under FAR:
-  
+
                     RESTRICTED RIGHTS LEGEND
-  
+
  Use, reproduction and disclosure by the US Government is
  subject to restrictions as set forth in subparagraphs (a)
  and (c) of the Commercial Computer Software - Restricted
  Rights clause in FAR 52.227-19.
-  
+
  Gaussian, Inc.
  340 Quinnipiac St., Bldg. 40, Wallingford CT 06492
-  
-  
+
+
  ---------------------------------------------------------------
  Warning -- This program may not be used in any manner that
  competes with the business of Gaussian, Inc. or will provide
@@ -53,30 +53,30 @@
  licensee that it is not a competitor of Gaussian, Inc. and that
  it will not use this program in any manner prohibited above.
  ---------------------------------------------------------------
-  
+
 
  Cite this work as:
  Gaussian 09, Revision E.01,
- M. J. Frisch, G. W. Trucks, H. B. Schlegel, G. E. Scuseria, 
- M. A. Robb, J. R. Cheeseman, G. Scalmani, V. Barone, B. Mennucci, 
- G. A. Petersson, H. Nakatsuji, M. Caricato, X. Li, H. P. Hratchian, 
- A. F. Izmaylov, J. Bloino, G. Zheng, J. L. Sonnenberg, M. Hada, 
- M. Ehara, K. Toyota, R. Fukuda, J. Hasegawa, M. Ishida, T. Nakajima, 
- Y. Honda, O. Kitao, H. Nakai, T. Vreven, J. A. Montgomery, Jr., 
- J. E. Peralta, F. Ogliaro, M. Bearpark, J. J. Heyd, E. Brothers, 
- K. N. Kudin, V. N. Staroverov, T. Keith, R. Kobayashi, J. Normand, 
- K. Raghavachari, A. Rendell, J. C. Burant, S. S. Iyengar, J. Tomasi, 
- M. Cossi, N. Rega, J. M. Millam, M. Klene, J. E. Knox, J. B. Cross, 
- V. Bakken, C. Adamo, J. Jaramillo, R. Gomperts, R. E. Stratmann, 
- O. Yazyev, A. J. Austin, R. Cammi, C. Pomelli, J. W. Ochterski, 
- R. L. Martin, K. Morokuma, V. G. Zakrzewski, G. A. Voth, 
- P. Salvador, J. J. Dannenberg, S. Dapprich, A. D. Daniels, 
- O. Farkas, J. B. Foresman, J. V. Ortiz, J. Cioslowski, 
+ M. J. Frisch, G. W. Trucks, H. B. Schlegel, G. E. Scuseria,
+ M. A. Robb, J. R. Cheeseman, G. Scalmani, V. Barone, B. Mennucci,
+ G. A. Petersson, H. Nakatsuji, M. Caricato, X. Li, H. P. Hratchian,
+ A. F. Izmaylov, J. Bloino, G. Zheng, J. L. Sonnenberg, M. Hada,
+ M. Ehara, K. Toyota, R. Fukuda, J. Hasegawa, M. Ishida, T. Nakajima,
+ Y. Honda, O. Kitao, H. Nakai, T. Vreven, J. A. Montgomery, Jr.,
+ J. E. Peralta, F. Ogliaro, M. Bearpark, J. J. Heyd, E. Brothers,
+ K. N. Kudin, V. N. Staroverov, T. Keith, R. Kobayashi, J. Normand,
+ K. Raghavachari, A. Rendell, J. C. Burant, S. S. Iyengar, J. Tomasi,
+ M. Cossi, N. Rega, J. M. Millam, M. Klene, J. E. Knox, J. B. Cross,
+ V. Bakken, C. Adamo, J. Jaramillo, R. Gomperts, R. E. Stratmann,
+ O. Yazyev, A. J. Austin, R. Cammi, C. Pomelli, J. W. Ochterski,
+ R. L. Martin, K. Morokuma, V. G. Zakrzewski, G. A. Voth,
+ P. Salvador, J. J. Dannenberg, S. Dapprich, A. D. Daniels,
+ O. Farkas, J. B. Foresman, J. V. Ortiz, J. Cioslowski,
  and D. J. Fox, Gaussian, Inc., Wallingford CT, 2013.
- 
+
  ******************************************
  Gaussian 09:  ES64L-G09RevE.01 30-Nov-2015
-                22-Dec-2016 
+                22-Dec-2016
  ******************************************
  %nproc=8
  Will use up to    8 processors via shared memory.
@@ -96,10 +96,10 @@
  -----
  Symbolic Z-matrix:
  Charge =  0 Multiplicity = 1
- Na                    0.        0.        0.15817 
- H                     0.        0.       -1.73992 
- 
-                          Input orientation:                          
+ Na                    0.        0.        0.15817
+ H                     0.        0.       -1.73992
+
+                          Input orientation:
  ---------------------------------------------------------------------
  Center     Atomic      Atomic             Coordinates (Angstroms)
  Number     Number       Type             X           Y           Z
@@ -113,7 +113,7 @@
  Full point group                 C*V     NOp   4
  Largest Abelian subgroup         C2V     NOp   4
  Largest concise Abelian subgroup C1      NOp   1
-                         Standard orientation:                         
+                         Standard orientation:
  ---------------------------------------------------------------------
  Center     Atomic      Atomic             Coordinates (Angstroms)
  Number     Number       Type             X           Y           Z
@@ -226,13 +226,13 @@
 
  Analyzing the SCF density
 
- Job title: Auh2f                                                           
+ Job title: Auh2f
 
  Storage needed:      1527 in NPA,      2215 in NBO (2147483620 available)
 
 
- NATURAL POPULATIONS:  Natural atomic orbital occupancies 
-                                                          
+ NATURAL POPULATIONS:  Natural atomic orbital occupancies
+
    NAO  Atom  No  lang   Type(AO)    Occupancy      Energy
  ----------------------------------------------------------
      1   Na    1  S      Cor( 1S)     2.00000     -38.15753
@@ -263,9 +263,9 @@
  WARNING:  Population inversion found on atom Na    1
 
 
- Summary of Natural Population Analysis:                  
-                                                          
-                                       Natural Population 
+ Summary of Natural Population Analysis:
+
+                                       Natural Population
                 Natural  -----------------------------------------------
     Atom  No    Charge         Core      Valence    Rydberg      Total
  -----------------------------------------------------------------------
@@ -274,7 +274,7 @@
  =======================================================================
    * Total *   -0.00000      9.99794     1.98304    0.01902    12.00000
 
-                                 Natural Population      
+                                 Natural Population
  --------------------------------------------------------
    Core                       9.99794 ( 99.9794% of  10)
    Valence                    1.98304 ( 99.1522% of   2)
@@ -288,7 +288,7 @@
       H    2            1S( 1.59)
 
 
- NAOs in the AO basis:                                                         
+ NAOs in the AO basis:
 
           AO         1       2       3       4       5       6       7       8
       ---------- ------- ------- ------- ------- ------- ------- ------- -------
@@ -363,7 +363,7 @@
   21.  H 2 (S)    0.0000  0.0000 -0.9716  0.8305 -1.2506
 
 
- NAO density matrix:                                                           
+ NAO density matrix:
 
           NAO        1       2       3       4       5       6       7       8
       ---------- ------- ------- ------- ------- ------- ------- ------- -------
@@ -466,7 +466,7 @@
 
        (Occupancy)   Bond orbital/ Coefficients/ Hybrids
  ---------------------------------------------------------------------------------
-     1. (2.00000) BD ( 1)Na   1 - H   2  
+     1. (2.00000) BD ( 1)Na   1 - H   2
                 ( 20.73%)   0.4554*Na   1 s( 95.47%)p 0.05(  4.52%)d 0.00(  0.01%)
                                            -0.0000  0.0000  0.9771  0.0002 -0.0001
                                             0.0000  0.0000  0.0000  0.0000  0.0000
@@ -513,7 +513,7 @@
     18. (0.00000) RY*(12)Na   1           s(  0.00%)p 0.00(  0.00%)d 1.00(100.00%)
     19. (0.00000) RY*(13)Na   1           s(  0.00%)p 1.00( 99.54%)d 0.00(  0.46%)
     20. (0.00002) RY*( 1) H   2           s(100.00%)
-    21. (0.00184) BD*( 1)Na   1 - H   2  
+    21. (0.00184) BD*( 1)Na   1 - H   2
                 ( 79.27%)   0.8903*Na   1 s( 95.47%)p 0.05(  4.52%)d 0.00(  0.01%)
                                            -0.0000  0.0000  0.9771  0.0002 -0.0001
                                             0.0000  0.0000  0.0000  0.0000  0.0000
@@ -540,7 +540,7 @@
 
      Threshold for printing:   0.50 kcal/mol
                                                                               E(2)  E(j)-E(i) F(i,j)
-         Donor NBO (i)                     Acceptor NBO (j)                 kcal/mol   a.u.    a.u. 
+         Donor NBO (i)                     Acceptor NBO (j)                 kcal/mol   a.u.    a.u.
  ===================================================================================================
 
  within unit  1
@@ -553,27 +553,27 @@
            NBO                        Occupancy    Energy   (geminal,vicinal,remote)
  ====================================================================================
  Molecular unit  1  (HNa)
-     1. BD (   1)Na   1 - H   2          2.00000    -0.17693   
-     2. CR (   1)Na   1                  2.00000   -38.15753   
-     3. CR (   2)Na   1                  1.99992    -2.40183   
-     4. CR (   3)Na   1                  1.99996    -1.11324   
-     5. CR (   4)Na   1                  1.99996    -1.11324   
+     1. BD (   1)Na   1 - H   2          2.00000    -0.17693
+     2. CR (   1)Na   1                  2.00000   -38.15753
+     3. CR (   2)Na   1                  1.99992    -2.40183
+     4. CR (   3)Na   1                  1.99996    -1.11324
+     5. CR (   4)Na   1                  1.99996    -1.11324
      6. CR (   5)Na   1                  1.99810    -1.10733  21(g)
-     7. RY*(   1)Na   1                  0.00009     0.15556   
-     8. RY*(   2)Na   1                  0.00004     0.32057   
-     9. RY*(   3)Na   1                  0.00004     0.32057   
-    10. RY*(   4)Na   1                  0.00002     0.40427   
-    11. RY*(   5)Na   1                  0.00000     0.02572   
-    12. RY*(   6)Na   1                  0.00000     0.12621   
-    13. RY*(   7)Na   1                  0.00000     0.16463   
-    14. RY*(   8)Na   1                  0.00000     0.14671   
-    15. RY*(   9)Na   1                  0.00000     0.35940   
-    16. RY*(  10)Na   1                  0.00000     0.45158   
-    17. RY*(  11)Na   1                  0.00000     0.02572   
-    18. RY*(  12)Na   1                  0.00000     0.35941   
-    19. RY*(  13)Na   1                  0.00000     0.12621   
-    20. RY*(   1) H   2                  0.00002     0.94406   
-    21. BD*(   1)Na   1 - H   2          0.00184     0.00442   
+     7. RY*(   1)Na   1                  0.00009     0.15556
+     8. RY*(   2)Na   1                  0.00004     0.32057
+     9. RY*(   3)Na   1                  0.00004     0.32057
+    10. RY*(   4)Na   1                  0.00002     0.40427
+    11. RY*(   5)Na   1                  0.00000     0.02572
+    12. RY*(   6)Na   1                  0.00000     0.12621
+    13. RY*(   7)Na   1                  0.00000     0.16463
+    14. RY*(   8)Na   1                  0.00000     0.14671
+    15. RY*(   9)Na   1                  0.00000     0.35940
+    16. RY*(  10)Na   1                  0.00000     0.45158
+    17. RY*(  11)Na   1                  0.00000     0.02572
+    18. RY*(  12)Na   1                  0.00000     0.35941
+    19. RY*(  13)Na   1                  0.00000     0.12621
+    20. RY*(   1) H   2                  0.00002     0.94406
+    21. BD*(   1)Na   1 - H   2          0.00184     0.00442
        -------------------------------
               Total Lewis   11.99794  ( 99.9828%)
         Valence non-Lewis    0.00184  (  0.0153%)

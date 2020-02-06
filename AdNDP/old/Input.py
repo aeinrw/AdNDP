@@ -4,7 +4,7 @@ import numpy as np
 class AdNDP:
 
     # 宏变量
-    __PNAt = 128
+    __NAt = 128
     __PNVl = 9
     __PNTot = 15
     __PNMax = 4096
@@ -18,17 +18,17 @@ class AdNDP:
     NVal = 0
     NTot = 0
     BSz = 0
-    __AtBs = np.zeros(shape=__PNAt, dtype=np.int32)
-    __AtBsRng = np.zeros(shape=(__PNAt, 2), dtype=np.int32)
+    __AtBs = np.zeros(shape=__NAt, dtype=np.int32)
+    __AtBsRng = np.zeros(shape=(__NAt, 2), dtype=np.int32)
     __DMNAO = np.zeros(shape=(__PBSz, __PBSz), dtype=np.float64)
-    __Thr = np.zeros(shape=__PNAt, dtype=np.float64)
+    __Thr = np.zeros(shape=__NAt, dtype=np.float64)
 
     # main函数变量
     MnSrch = 0
     NBOOcc = np.zeros(shape=__PNMax, dtype=np.float64)
     NBOVec = np.zeros(shape=(__PBSz, __PNMax), dtype=np.float64)
     DResid = 0.0
-    NBOCtr = np.zeros(shape=(__PNAt, __PNMax), dtype=np.int32)
+    NBOCtr = np.zeros(shape=(__NAt, __PNMax), dtype=np.int32)
     NBOAmnt = 0
     __NAOAO = np.zeros(shape=(__PBSz, __PBSz), dtype=np.float64)
 
@@ -144,7 +144,7 @@ class AdNDP:
 
         PrelOcc = np.zeros(shape=self.__PNMax, dtype=np.float64)
         PrelVec = np.zeros(shape=(self.__PBSz, self.__PNMax), dtype=np.float64)
-        PrelCtr = np.zeros(shape=(self.__PNAt, self.__PNMax), dtype=np.int32)
+        PrelCtr = np.zeros(shape=(self.__NAt, self.__PNMax), dtype=np.int32)
 
         Cnt = 0
         PP = 0
@@ -152,8 +152,8 @@ class AdNDP:
         IndF = 0
         NCtr = 0
         AtBlQnt = 0
-        AtBl = np.zeros(shape=(100000, self.__PNAt), dtype=np.int32)
-        CBl = np.zeros(shape=self.__PNAt, dtype=np.int32)
+        AtBl = np.zeros(shape=(100000, self.__NAt), dtype=np.int32)
+        CBl = np.zeros(shape=self.__NAt, dtype=np.int32)
         threshold = 0.0
         vmax = 0.0
         DUMMY = np.zeros(shape=(self.__PBSz, self.__PBSz), dtype=np.float64)
