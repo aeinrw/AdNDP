@@ -1,0 +1,18 @@
+AtBl 0 
+ EiVal 2.000041
+trace=9.999959
+AtBl 0 
+ EiVal 2.000041
+trace=7.999918
+AtBl 0 
+ EiVal 2.000025
+trace=5.999893
+AtBl 0 
+ EiVal 2.000000
+trace=3.999893
+AtBl 0 
+ EiVal 1.999931
+trace=1.999962
+AtBl 0 1 
+ EiVal 2.000052
+trace=-0.000090

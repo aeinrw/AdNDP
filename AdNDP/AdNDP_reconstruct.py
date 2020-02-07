@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.special import comb
 
 PNMax = 100
 
@@ -49,249 +50,204 @@ def calbond(b: BOND):
 
 
 def main():
+
     NAOAO = np.zeros((21, 21), dtype=np.float64)
     Input(NAOAO)
 
-    MnSrch = 0
+    NBO,NBOAmnt,DResid = AdNBO()
 
-    NBOOcc = np.zeros(PNMax, dtype=np.float64)
-    NBOVec = np.zeros((BSz, PNMax), dtype=np.float64)
-    # NBOVecAO = np.zeros((BSz, PNMax), dtype=np.float64)
+    NBOOcc,NBOVec,NBOCtr = NBO
 
-    DResid = 0.0
-
-    NBOCtr = np.zeros((NAt, PNMax), dtype=np.int32)
-    NBOAmnt = 0
 
     #bond = np.zeros(PNMax, dtype=BOND)
 
-    MnSrch,NBOAmnt,DResid = AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid)
+    # MnSrch,NBOAmnt,DResid = AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid)
 
     with open("result.txt","w") as fp:
         fp.write("--------------DMNAO----------------\n")
-        for i in range(21):
-            for j in range(21):
+        for i in range(BSz):
+            for j in range(BSz):
                 fp.write("{:f} ".format(DMNAO[i][j]))
             fp.write("\n")
         fp.write("---------------NBOOcc--------------\n")
-        for i in range(21):
+        for i in range(BSz):
             fp.write("{:f} ".format(NBOOcc[i]))
         fp.write('\n')
         fp.write("---------------NBOVec---------------\n")
-        for i in range(21):
-            for j in range(21):
+        for i in range(BSz):
+            for j in range(BSz):
                 fp.write("{:f} ".format(NBOVec[i][j]))
             fp.write("\n")
         fp.write("---------------NBOCtr---------------\n")
         for i in range(NAt):
-            for j in range(21):
+            for j in range(BSz):
                 fp.write("{:d} ".format(NBOCtr[i][j]))
             fp.write("\n")
         fp.write("---------------Other---------------\n")
-        fp.write("MnSrch={:d}\n".format(MnSrch))
         fp.write("NBOAmnt={:d}\n".format(NBOAmnt))
         fp.write("DResid={:f}\n".format(DResid))
 
 
 
 
-def AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid):
+def AdNBO():
 
     global DMNAO
-    PrelOcc = np.zeros(PNMax, dtype=np.float64)
-    PrelVec = np.zeros((BSz, PNMax), dtype=np.float64)
-    PrelCtr = np.zeros((NAt, PNMax), dtype=np.int32)
 
-    Cnt = 0
-    PP = 0
-    IndS = 0
-    IndF = 0
-    NCtr = 0
-    AtBlQnt = 0
-    AtBl = np.zeros((200, NAt), dtype=np.int32)
-    CBl = np.zeros(NAt, dtype=np.int32)
+    PrelOcc = np.zeros(BSz, dtype=np.float64)
+    PrelVec = np.zeros((BSz, BSz), dtype=np.float64)
+    PrelCtr = np.ones((NAt, BSz), dtype=np.int32)
+    PrelCtr *= -1
 
-    #prebond = np.zeros(PNMax, dtype=BOND)
+    NBOOcc = np.zeros(BSz, dtype=np.float64)
+    NBOVec = np.zeros((BSz, BSz), dtype=np.float64)
+    NBOCtr = np.ones((NAt, BSz), dtype=np.int32)
+    NBOCtr *= -1
 
-    threshold = 0.0
-    vmax = 0.0
-    DUMMY = np.zeros((BSz, BSz), dtype=np.float64)
-    EiVal = np.zeros(BSz, dtype=np.float64)
-    EiVec = np.eye(BSz, dtype=np.float64)
+    IndS=0
+    IndF=0
 
 
-    with open("out_debug", 'w') as fp:
+    with open("out_debug.txt",'w') as debug:
 
         print("Welcome to AdNDP-manual program v3.0, revised by Ran-wei")
-
         NBOAmnt = 0
 
         for NCtr in range(1,NAt+1):
             threshold = Thr[NCtr-1]
             if threshold == 0.0:
-                print("skippint NCtr= ", NCtr)
+                print("skippint NCtr=",NCtr)
                 continue
 
-            if MnSrch == 0:
-                AtBlQnt = Subsets(AtBl, AtBlQnt, NCtr, NAt)
+
+            AtBl,AtBlQnt = Subsets(NCtr)
+
+
 
             print("NCtr={:d},AtBlQnt={:d}".format(NCtr, AtBlQnt))
 
-            PP = 0
-            Cnt = 1
+            PP=0
+            Counter = 1
             while True:
                 for k in range(AtBlQnt):
-                    CBl[:NCtr] = AtBl[k][:NCtr]
-
-                    BlockDMNAO(CBl, NCtr, DUMMY)
-
-
+                    CBl = AtBl[k,:] #当前的中心原子组合
+                    DUMMY = BlockDMNAO(DMNAO,CBl)
 
                     value,vector = np.linalg.eig(DUMMY)
-                    EiVal,EiVec = np.real(value),np.real(vector)
-                    imax = np.argmax(EiVal)
-                    valmax = EiVal[imax]
-                    vecmax = EiVec[:,imax]
+                    value,vector = np.real(value),np.real(vector)
+                    imax = np.argmax(value)
+                    EiVal = value[imax]
+                    EiVec = vector[:,imax]
 
-
-
-                    if np.fabs(valmax - 2.0) <= threshold:
-                        PrelOcc[PP] = valmax
-                        PrelVec[:,PP] = vecmax
-                        PrelCtr[:NCtr,PP] = CBl[:NCtr]
-                        PP += 1
-                        fp.write("AtBl ")
+                    if np.fabs(EiVal - 2.0)<=threshold:
+                        PrelOcc[PP] = EiVal
+                        PrelVec[:,PP] = EiVec
+                        PrelCtr[:NCtr,PP]=CBl[:NCtr]
+                        PP+=1
+                        debug.write("AtBl ")
                         for j in range(NCtr):
-                            fp.write("{:3d}".format(CBl[j]))
-                        fp.write("\nEival {:f}\n".format(EiVal[imax]))
+                            debug.write("{:d} ".format(CBl[j]))
+                        debug.write("\n EiVal {:f}\n".format(EiVal))
 
-                Cnt += 1
-                if PP > 0:
+                Counter+=1
+                if PP>0:
                     AtBl[:PP,:NCtr] = PrelCtr[:NCtr,:PP].T
                     AtBlQnt = PP
-                    print("***AtBlQnt: {:5d}".format(AtBlQnt))
-                    IndF = SortPrel(PrelOcc, PrelVec, PrelCtr, PP, NBOOcc, NBOVec,NBOVec,NCtr,IndF)
-                    DepleteDMNAO(NBOOcc, NBOVec, IndS, IndF)
 
-                    DMNAO -= vmax*np.outer(vecmax,vecmax)
+                    #SortPrel
+                    #-----------------------------
+                    NBOOcc[IndF]=PrelOcc[0]
+                    NBOVec[:,IndF]=PrelVec[:,0]
+                    NBOCtr[:,IndF]=PrelCtr[:,0]
+                    IndF+=1
+                    #-----------------------------
 
-                    DResid = DMNAO.trace()
-                    print("DResid=",DResid)
+                    for i in range(IndS,IndF):
+                        a = NBOVec[:,i]
+                        DMNAO -= NBOOcc[i]*np.outer(a,a)
 
-                    IndS = IndF
+                    debug.write("trace={:f}\n".format(DMNAO.trace()))
+
+                    IndS=IndF
                     NBOAmnt = IndF
                     print("PP={:d},Indf={:d},IndF={:d},NBOAmnt={:d},Cnt={:d}".format(
-                        PP, IndS, IndF, NBOAmnt,Cnt))
-                    PP = 0
+                        PP, IndS, IndF, NBOAmnt,Counter))
+                    PP=0
                 else:
                     break
 
-                if Cnt > 20:
+                if Counter>10:
                     break
 
-    return MnSrch, NBOAmnt, DResid
-
-
-def SortPrel(PrelOcc, PrelVec, PrelCtr, PP, NBOOcc,NBOVec,NBOCtr,NCtr,IndF):
-
-
-    Cnt1 = 1
-    ThrOcc = 0.0
-    PrelAccpt = np.zeros(PNMax, dtype=np.int32)
+    return (NBOOcc,NBOVec,NBOCtr),NBOAmnt,DMNAO.trace()
 
 
 
-    print("SortPrel OK")
-    PrelAccpt=np.argsort(-PrelOcc)
-    PrelOcc_sorted = PrelOcc[PrelAccpt]
-
-    while int(PrelOcc_sorted[Cnt1]*100000)==int(PrelOcc_sorted[Cnt1-1]*100000):
-        Cnt1+=1
-
-    # print("Ctr=",PrelCtr[:,PrelAccpt[0]]+1)
-    # print("ThrOcc=",PrelOcc[PrelAccpt[0]])
-
-    for j in range(Cnt1):
-        i = PrelAccpt[j]
-        NBOOcc[IndF] = PrelOcc[i]
-        NBOVec[:,IndF] = PrelVec[:,i]
-        NBOCtr[:NCtr,IndF] = PrelCtr[:NCtr,i]
-        NBOCtr[NCtr,IndF] = -1
-        IndF += 1
-
-    return IndF
-
-def DepleteDMNAO(NBOOcc,NBOVec,IndS,IndF):
-    global DMNAO
-
-    print("DeleteDMNAO OK")
-    for l in range(IndS,IndF):
-        a = NBOVec[:,l]
-        DMNAO -= NBOOcc[l]*np.outer(a,a)
-
-def BlockDMNAO(CBl, NCtr, DUMMY):
-    flag = np.zeros(BSz, dtype=np.bool)
-    for l in range(NCtr):
-        n1 = AtBsRng[CBl[l],0]
-        n2 = AtBsRng[CBl[l],1]
-        print("-------->n1=",n1," n2=",n2)
-        for i in range(n1, n2):
-            flag[i] = True
-
-    for i in range(BSz):
-        for j in range(BSz):
-            if (flag[i] and flag[j]):
-                DUMMY[i,j] = DMNAO[i,j]
-            else:
-                DUMMY[i,j] = 0.0
 
 
-def Subsets(AtBl, NLn, NClmn, NAt):
 
-    if NClmn == NAt:
-        for j in range(NAt):
-            AtBl[0, j] = j
-        NLn = 1
-        return NLn
+def Subsets(NCtr):
 
-    if NClmn == 1:
-        for i in range(NAt):
-            AtBl[i, 0] = i
-            AtBl[i, 1] = -1
-        NLn = NAt
-        return NLn
+    global NAt
+    AtBlQnt = int(comb(NAt,NCtr))
+    AtBl = np.zeros((AtBlQnt,NCtr),dtype=np.int32)
+
+    if NCtr == NAt:
+        AtBl[0,:]=np.arange(NAt)
+        return AtBl,AtBlQnt
+
+    if NCtr == 1:
+        AtBl[:,0]=np.arange(NAt)
+        return AtBl,AtBlQnt
 
     Done = 0
     NLn = 1
 
-    for j in range(NClmn):
-        AtBl[NLn - 1, j] = j
+    AtBl[NLn-1,:]=np.arange(NCtr)
 
     while (True):
-        for k in range(NClmn):
-            if AtBl[NLn - 1, k] == (NAt - NClmn + k):
+        for k in range(NCtr):
+            if AtBl[NLn - 1, k] == (NAt - NCtr + k):
                 Done = k + 1
                 break
-
         if Done == 1:
-            return NLn
+            return AtBl,AtBlQnt
         if Done == 0:
             NLn += 1
-            for k in range(NClmn - 1):
-                AtBl[NLn - 1, k] = AtBl[NLn - 2, k]
-            if AtBl[NLn - 2, NClmn - 1] < NAt:
-                AtBl[NLn - 1, NClmn - 1] = AtBl[NLn - 2, NClmn - 1] + 1
+            AtBl[NLn - 1, :NCtr-1] = AtBl[NLn - 2, :NCtr-1]
+            if AtBl[NLn - 2, NCtr - 1] < NAt:
+                AtBl[NLn - 1, NCtr - 1] = AtBl[NLn - 2, NCtr - 1] + 1
         else:
             NLn += 1
-            for k in range(Done - 2):
-                AtBl[NLn - 1, k] = AtBl[NLn - 2, k]
-            #print("!!",NLn-1,Done-2)
+            AtBl[NLn - 1, :Done-2] = AtBl[NLn - 2, :Done-2]
             AtBl[NLn - 1, Done - 2] = AtBl[NLn - 2, Done - 2] + 1
-            for k in range(Done - 1, NClmn):
+            for k in range(Done - 1, NCtr):
                 AtBl[NLn - 1, k] = AtBl[NLn - 1, k - 1] + 1
             Done = 0
 
-    return NLn
+    return AtBl,AtBlQnt
+
+def BlockDMNAO(DMNAO,CBl):
+
+    DUMMY = np.zeros(DMNAO.shape,dtype=np.float64)
+
+    flag = np.zeros(BSz,dtype=np.bool)
+
+    for l in range(len(CBl)):
+        n1 = AtBsRng[CBl[l],0]
+        n2 = AtBsRng[CBl[l],1]
+        flag[n1:n2] = True
+
+    for i in range(BSz):
+        for j in range(BSz):
+            if flag[i] and flag[j]:
+                DUMMY[i,j] = DMNAO[i,j]
+
+    return DUMMY
+
+
+
+
 
 def Input(NAOAO):
 
@@ -405,6 +361,5 @@ def Input(NAOAO):
         print("Read DMNAO NAOAO matrixs in nbofile OK!")
 
 if __name__ == '__main__':
-    prt=open("print.txt","w")
+
     main()
-    prt.close()
