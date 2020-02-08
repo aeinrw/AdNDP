@@ -47,7 +47,7 @@ def main():
 
     Output(NBO,NBOAmnt,DResid)
 
-    NBOVecAO = BasisChange(NBOVec,NAOAO,BSz,NBOAmnt)
+    NBOVecAO = BasisChange(NBOVec,NAOAO)
 
     NBOPlotMolden(NBOOcc,NBOVecAO,NBOAmnt)
 
@@ -206,20 +206,17 @@ def Subsets(NCtr):
     return AtBl,AtBlQnt
 
 def BlockDMNAO(DMNAO,CBl):
-
     DUMMY = np.zeros(DMNAO.shape,dtype=np.float64)
-
-    flag = np.zeros(BSz,dtype=np.bool)
+    flag = []
 
     for l in range(len(CBl)):
         n1 = AtBsRng[CBl[l],0]
         n2 = AtBsRng[CBl[l],1]
-        flag[n1:n2] = True
+        flag.append((n1,n2))
 
-    for i in range(BSz):
-        for j in range(BSz):
-            if flag[i] and flag[j]:
-                DUMMY[i,j] = DMNAO[i,j]
+    for i in flag:
+        for j in flag:
+            DUMMY[i[0]:i[1],j[0]:j[1]] = DMNAO[i[0]:i[1],j[0]:j[1]]
 
     return DUMMY
 
@@ -360,7 +357,7 @@ def Output(NBO,NBOAmnt,DResid):
     out.write("\nResidual Density: {:10.6f}\n".format(DResid))
     out.close()
 
-def BasisChange(Old,Trans,row,col):
+def BasisChange(Old,Trans):
 
     return Trans@Old
 
