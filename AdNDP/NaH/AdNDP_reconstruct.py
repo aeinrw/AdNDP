@@ -3,16 +3,6 @@ from scipy.special import comb
 
 PNMax = 100
 
-'''
-! NAt - number of atoms
-! NVal - number of valence electronic pairs
-! NTot - number of core and valence electronic pairs
-! NMax - the maximum number of NBO vectors to be found;
-         defines the size of NBOVec , NBOOcc , NMax
-! BSz - total number of basis functions;
-        defines the size of the density matrix
-'''
-
 INIFile = './AdNDP.ini'
 
 NAt = 0
@@ -46,7 +36,6 @@ class BOND:
             n2 = AtBsRng[m,1]
             self.vocc[i] = self.occ*(np.sum((self.vec**2)[n1:n2]))
 
-
 def main():
 
     NAOAO = np.zeros((21, 21), dtype=np.float64)
@@ -61,8 +50,6 @@ def main():
     NBOVecAO = BasisChange(NBOVec,NAOAO,BSz,NBOAmnt)
 
     NBOPlotMolden(NBOOcc,NBOVecAO,NBOAmnt)
-
-
 
 def AdNBO():
 
@@ -347,8 +334,6 @@ def Output(NBO,NBOAmnt,DResid):
     out.write("\nResidual Density: {:10.6f}\n".format(DResid))
     out.close()
 
-
-
 def BasisChange(Old,Trans,row,col):
 
     return Trans@Old
@@ -363,7 +348,7 @@ def NBOPlotMolden(NBOOcc,NBOVec,NBOAmnt):
         dtln = fp1.readline()
         # fp2.write(dtln)
 
-    Cnt = 0
+    #Cnt = 0
     Resid = NBOAmnt
     k = 0
     while Resid>0:
@@ -385,9 +370,6 @@ def NBOPlotMolden(NBOOcc,NBOVec,NBOAmnt):
 
     fp1.close()
     fp2.close()
-
-
-
 
 if __name__ == '__main__':
 
