@@ -3,8 +3,6 @@ from scipy.special import comb
 
 PNMax = 100
 
-de=0
-
 '''
 ! NAt - number of atoms
 ! NVal - number of valence electronic pairs
@@ -29,24 +27,24 @@ CMOFile = ''
 AdNDPFile = ''
 
 # (1,)
-BOND = np.dtype([('nc', np.int32, (1,)),
-                 ('ctr', np.int32, (NAt,)),
-                 ('occ', np.float64, (1,)),
-                 ('vec', np.float64, (BSz,)),
-                 ('vocc', np.float64, (BSz,))])
+class BOND:
 
+    def __init__(self):
+        self.__NAt = NAt
+        self.__BSz = BSz
+        self.nc = 0
+        self.occ = 0.0
+        self.vec = np.zeros(self.__BSz,dtype=np.float64)
+        self.ctr = np.zeros(self.__NAt,dtype=np.int32)
+        self.vocc = np.zeros(self.__NAt,dtype=np.float64)
 
-def calbond(b: BOND):
-
-    global AtBsRng
-
-    for i in range(b['nc'][0]):
-
-        m = b['ctr'][i]
-        n1 = AtBsRng[m, 0]
-        n2 = AtBsRng[m, 1]
-
-        b['vocc'][i] = b['vec'][n1:n2].dot(b['vec'][n1:n2]) * b['occ'][0]
+    def call(self):
+        self.nc = np.sum(self.ctr!=-1)
+        for i in range(self.nc):
+            m = self.ctr[i]
+            n1 = AtBsRng[m,0]
+            n2 = AtBsRng[m,1]
+            self.vocc[i] = self.occ*(np.sum((self.vec**2)[n1:n2]))
 
 
 def main():
@@ -58,41 +56,19 @@ def main():
 
     NBOOcc,NBOVec,NBOCtr = NBO
 
+    Output(NBO,NBOAmnt,DResid)
 
-    #bond = np.zeros(PNMax, dtype=BOND)
+    NBOVecAO = BasisChange(NBOVec,NAOAO,BSz,NBOAmnt)
 
-    # MnSrch,NBOAmnt,DResid = AdNBO(MnSrch,NBOOcc,NBOVec,NBOCtr,NBOAmnt,DResid)
-
-    with open("result.txt","w") as fp:
-        fp.write("--------------DMNAO----------------\n")
-        for i in range(BSz):
-            for j in range(BSz):
-                fp.write("{:f} ".format(DMNAO[i][j]))
-            fp.write("\n")
-        fp.write("---------------NBOOcc--------------\n")
-        for i in range(BSz):
-            fp.write("{:f} ".format(NBOOcc[i]))
-        fp.write('\n')
-        fp.write("---------------NBOVec---------------\n")
-        for i in range(BSz):
-            for j in range(BSz):
-                fp.write("{:f} ".format(NBOVec[i][j]))
-            fp.write("\n")
-        fp.write("---------------NBOCtr---------------\n")
-        for i in range(NAt):
-            for j in range(BSz):
-                fp.write("{:d} ".format(NBOCtr[i][j]))
-            fp.write("\n")
-        fp.write("---------------Other---------------\n")
-        fp.write("NBOAmnt={:d}\n".format(NBOAmnt))
-        fp.write("DResid={:f}\n".format(DResid))
-
+    NBOPlotMolden(NBOOcc,NBOVecAO,NBOAmnt)
 
 
 
 def AdNBO():
 
     global DMNAO
+
+    bond = []
 
     PrelOcc = np.zeros(BSz, dtype=np.float64)
     PrelVec = np.zeros((BSz, BSz), dtype=np.float64)
@@ -107,84 +83,76 @@ def AdNBO():
     IndS=0
     IndF=0
 
+    debug = open("out_debug.txt",'w')
 
-    with open("out_debug.txt",'w') as debug:
+    print("Welcome to AdNDP-manual program v3.0, revised by Ran-wei")
+    NBOAmnt = 0
 
-        print("Welcome to AdNDP-manual program v3.0, revised by Ran-wei")
-        NBOAmnt = 0
+    for NCtr in range(1,NAt+1):
+        threshold = Thr[NCtr-1]
+        if threshold == 0.0:
+            print("skippint NCtr=",NCtr)
+            continue
 
-        for NCtr in range(1,NAt+1):
-            threshold = Thr[NCtr-1]
-            if threshold == 0.0:
-                print("skippint NCtr=",NCtr)
-                continue
+        AtBl,AtBlQnt = Subsets(NCtr)
+        print("NCtr={:d},AtBlQnt={:d}".format(NCtr, AtBlQnt))
+
+        PP=0
+        Counter = 1
+        while True:
+            for k in range(AtBlQnt):
+                CBl = AtBl[k,:] #当前的中心原子组合
+                DUMMY = BlockDMNAO(DMNAO,CBl)
+
+                value,vector = np.linalg.eig(DUMMY)
+                value,vector = np.real(value),np.real(vector)
+                imax = np.argmax(value)
+                EiVal = value[imax]
+                EiVec = vector[:,imax]
 
 
-            AtBl,AtBlQnt = Subsets(NCtr)
+                if np.fabs(EiVal - 2.0)<=threshold:
+                    PrelOcc[PP] = EiVal
+                    PrelVec[:,PP] = EiVec
+                    PrelCtr[:NCtr,PP]=CBl[:NCtr]
+                    PP+=1
+                    debug.write("AtBl ")
+                    for j in range(NCtr):
+                        debug.write("{:d} ".format(CBl[j]))
+                    debug.write("\n EiVal {:f}\n".format(EiVal))
 
+            Counter+=1
+            if PP>0:
+                AtBl[:PP,:NCtr] = PrelCtr[:NCtr,:PP].T
+                AtBlQnt = PP
 
+                #SortPrel
+                #-----------------------------
+                NBOOcc[IndF]=PrelOcc[0]
+                NBOVec[:,IndF]=PrelVec[:,0]
+                NBOCtr[:,IndF]=PrelCtr[:,0]
+                IndF+=1
+                #-----------------------------
 
-            print("NCtr={:d},AtBlQnt={:d}".format(NCtr, AtBlQnt))
+                for i in range(IndS,IndF):
+                    a = NBOVec[:,i]
+                    DMNAO -= NBOOcc[i]*np.outer(a,a)
 
-            PP=0
-            Counter = 1
-            while True:
-                for k in range(AtBlQnt):
-                    CBl = AtBl[k,:] #当前的中心原子组合
-                    DUMMY = BlockDMNAO(DMNAO,CBl)
+                debug.write("trace={:f}\n".format(DMNAO.trace()))
 
-                    value,vector = np.linalg.eig(DUMMY)
-                    value,vector = np.real(value),np.real(vector)
-                    imax = np.argmax(value)
-                    EiVal = value[imax]
-                    EiVec = vector[:,imax]
+                IndS=IndF
+                NBOAmnt = IndF
+                print("PP={:d},Indf={:d},IndF={:d},NBOAmnt={:d},Cnt={:d}".format(
+                    PP, IndS, IndF, NBOAmnt,Counter))
+                PP=0
+            else:
+                break
 
-                    if np.fabs(EiVal - 2.0)<=threshold:
-                        PrelOcc[PP] = EiVal
-                        PrelVec[:,PP] = EiVec
-                        PrelCtr[:NCtr,PP]=CBl[:NCtr]
-                        PP+=1
-                        debug.write("AtBl ")
-                        for j in range(NCtr):
-                            debug.write("{:d} ".format(CBl[j]))
-                        debug.write("\n EiVal {:f}\n".format(EiVal))
+            if Counter>10:
+                break
 
-                Counter+=1
-                if PP>0:
-                    AtBl[:PP,:NCtr] = PrelCtr[:NCtr,:PP].T
-                    AtBlQnt = PP
-
-                    #SortPrel
-                    #-----------------------------
-                    NBOOcc[IndF]=PrelOcc[0]
-                    NBOVec[:,IndF]=PrelVec[:,0]
-                    NBOCtr[:,IndF]=PrelCtr[:,0]
-                    IndF+=1
-                    #-----------------------------
-
-                    for i in range(IndS,IndF):
-                        a = NBOVec[:,i]
-                        DMNAO -= NBOOcc[i]*np.outer(a,a)
-
-                    debug.write("trace={:f}\n".format(DMNAO.trace()))
-
-                    IndS=IndF
-                    NBOAmnt = IndF
-                    print("PP={:d},Indf={:d},IndF={:d},NBOAmnt={:d},Cnt={:d}".format(
-                        PP, IndS, IndF, NBOAmnt,Counter))
-                    PP=0
-                else:
-                    break
-
-                if Counter>10:
-                    break
-
+    debug.close()
     return (NBOOcc,NBOVec,NBOCtr),NBOAmnt,DMNAO.trace()
-
-
-
-
-
 
 def Subsets(NCtr):
 
@@ -245,13 +213,9 @@ def BlockDMNAO(DMNAO,CBl):
 
     return DUMMY
 
-
-
-
-
 def Input(NAOAO):
 
-    global NAt,NVal,NTot,BSz,AtBs,AtBsRng,Thr,DMNAO,CMOFile,ADNDPFile
+    global NAt,NVal,NTot,BSz,AtBs,AtBsRng,Thr,DMNAO,CMOFile,AdNDPFile
 
     import configparser
     cf = configparser.ConfigParser()
@@ -265,7 +229,7 @@ def Input(NAOAO):
 
     nbofile = cf.get(sections, "nbofile")
     CMOFile = cf.get(sections, "CMOFile")
-    ADNDPFile = cf.get(sections, "AdNDPFile")
+    AdNDPFile = cf.get(sections, "AdNDPFile")
 
     #AtBs = np.zeros(NAt, dtype=np.int32)
     AtBsRng = np.zeros((NAt, 2), dtype=np.int32)
@@ -359,6 +323,71 @@ def Input(NAOAO):
             k += 1
 
         print("Read DMNAO NAOAO matrixs in nbofile OK!")
+
+def Output(NBO,NBOAmnt,DResid):
+
+    NBOOcc,NBOVec,NBOCtr = NBO
+
+    out = open("./NDP_nbo.log","w")
+    out.write("NBOAmnt = {:4d}\n".format(NBOAmnt))
+    bond = BOND()
+
+    for i in range(NBOAmnt):
+        bond.occ = NBOOcc[i].copy()
+        bond.vec[:]=NBOVec[:,i].copy()
+        bond.ctr[:]=NBOCtr[:,i].copy()
+
+        bond.call()
+
+        out.write("bond {:3d} ({:2d} center, {:.3f}|e|) ***:".format(i+1,bond.nc,bond.occ))
+        for j in range(bond.nc):
+            out.write("{:3d}({:.3f}) ".format(bond.ctr[j]+1,bond.vocc[j]))
+        out.write("\n")
+
+    out.write("\nResidual Density: {:10.6f}\n".format(DResid))
+    out.close()
+
+
+
+def BasisChange(Old,Trans,row,col):
+
+    return Trans@Old
+
+def NBOPlotMolden(NBOOcc,NBOVec,NBOAmnt):
+
+    fp1 = open(CMOFile,'r')
+    fp2 = open(AdNDPFile,'w')
+
+    dtln = ""
+    while dtln[:35] != "     Molecular Orbital Coefficients":
+        dtln = fp1.readline()
+        # fp2.write(dtln)
+
+    Cnt = 0
+    Resid = NBOAmnt
+    k = 0
+    while Resid>0:
+        dtln = fp1.readline()
+        fp2.write(dtln)
+        dtln = fp1.readline()
+        fp2.write(dtln)
+        dtln = fp1.readline()
+        dtln = dtln[:21]
+        fp2.write(dtln+"{:10.5f}{:10.5f}{:10.5f}{:10.5f}{:10.5f}\n".format(NBOOcc[5*k],NBOOcc[5*k+1],NBOOcc[5*k+2],NBOOcc[5*k+3],NBOOcc[5*k+4]))
+
+        for i in range(BSz):
+            dtln = fp1.readline()
+            dtln = dtln[:21]
+            fp2.write(dtln+"{:10.5f}{:10.5f}{:10.5f}{:10.5f}{:10.5f}\n".format(NBOVec[i][5*k],NBOVec[i][5*k+1],NBOVec[i][5*k+2],NBOVec[i][5*k+3],NBOVec[i][5*k+4]))
+
+        k+=1
+        Resid -=5
+
+    fp1.close()
+    fp2.close()
+
+
+
 
 if __name__ == '__main__':
 
