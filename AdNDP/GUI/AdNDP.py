@@ -4,43 +4,31 @@ from scipy.special import comb
 import time
 
 class AdNDP:
-    '''The class of AdNDP algorithm.
 
-    Attributes
-        self.NAt: total number of atoms.
-        NBf: total number of basis functions.
-        Thr: occupation number thresholds.
-        AtBs: basis function of each atom.
-        DMNAO: NAO density matrix.
-        AONAO: NAOs in the AO basis.
-    '''
 
-    def __init__(self,initFile):
-        '''Get data from init file.
+    def __init__(self,initFile,logOutputArea):
+        self.logOutputArea = logOutputArea
 
-        Parameters
-            nboFile: the path of a .ini file
-        '''
         cf = configparser.ConfigParser()
         cf.read(initFile)
         sections = cf.sections()[0]
-
         self.NAt = cf.getint(sections,"NAt")
-        self.NBf = cf.getint(sections, "BSf")
+        self.NBf = cf.getint(sections, "NBf")
         self.AtBs = np.array(cf.get(sections, "AtBs").split(','), dtype=np.int32)
         self.Thr = np.array(cf.get(sections, "Thr").split(','), dtype=np.float64)
-        self.__nboFile = cf.get(sections,"nbofile")
 
+        self.logOutputArea.append("Number of atoms:{:d}".format(self.NAt))
+        self.logOutputArea.append("Total amount of basic functions:{:d}".format(self.NBf))
+        self.logOutputArea.append("Amount of basis functions on each atom:"+str(self.AtBs))
+        self.logOutputArea.append("Occupation number thresholds:"+str(self.Thr))
+
+        self.__nboFile = cf.get(sections,"nbofile")
         self.__AtBsRng = np.zeros((self.NAt,2),dtype = np.int32)
         j = 0
         for i in range(self.NAt):
             self.__AtBsRng[i,0] = j
             j += self.AtBs[i]
             self.__AtBsRng[i,1] = j
-
-        assert self.NBf == j, "Size of basis set error!! {:5d} != {:5d}".format(
-            self.NBf, j)
-
         self.DMNAO = self.__readMatrix(self.__nboFile,"DMNAO")
 
     def partition(self):
@@ -61,11 +49,11 @@ class AdNDP:
         for NCtr in range(1,self.NAt+1):
             threshold = self.Thr[NCtr-1]
             if threshold == 0.0:
-                print("Skip {:d}c-2e".format(NCtr))
+                self.logOutputArea.append("Skip {:d}c-2e".format(NCtr))
                 continue
 
             AtBl,AtBlQnt = self.__subsets(NCtr)
-            print("Searching {:d}c-2e......".format(NCtr))
+            self.logOutputArea.append("Searching {:d}c-2e......".format(NCtr))
 
             counter = 0
 
@@ -91,7 +79,7 @@ class AdNDP:
                         counter+=1
                         a = self.nboVec[:,i]
                         self.DMNAO -= self.nboOcc[i]*np.outer(a,a)
-                        print("    Finded NO.{:d} {:d}c-2e bond orbital".format(counter,NCtr))
+                        self.logOutputArea.append("    Finded NO.{:d} {:d}c-2e bond orbital".format(counter,NCtr))
                     indS = indF
                     nboAmnt = indF
                     PP=0
@@ -104,28 +92,20 @@ class AdNDP:
         return nboAmnt
 
     def output(self):
-        print("----------result----------")
-        fp = open("summary.log",'w')
-        fp.write("nboAmnt={:4d}\n".format(self.nboAmnt))
-        print("nboAmnt={:4d}\n".format(self.nboAmnt))
+        self.logOutputArea.append("----------result----------")
+        self.logOutputArea.append("nboAmnt={:4d}".format(self.nboAmnt))
         for i in range(self.nboAmnt):
             nc = np.sum(self.nboCtr[:,i]!=-1)
-            fp.write("bond {:3d} ({:2d} center,{:.3f} e):".format(i+1,nc,np.sum(self.nboOcc[i])))
-            print("bond {:3d} ({:2d} center,{:.3f} e):".format(i+1,nc,np.sum(self.nboOcc[i])),end='')
+            self.logOutputArea.append("bond {:3d} ({:2d} center,{:.3f} e):".format(i+1,nc,np.sum(self.nboOcc[i])))
             for j in range(nc):
                 m = self.nboCtr[j,i]
                 n1 = self.__AtBsRng[m,0]
                 n2 = self.__AtBsRng[m,1]
                 vocc = self.nboOcc[i]*(np.sum((self.nboVec[:,i]**2)[n1:n2]))
-                fp.write("{:3d}({:.3f}) ".format(self.nboCtr[j,i]+1,vocc))
-                print("{:3d}({:.3f}) ".format(self.nboCtr[j,i]+1,vocc),end='')
-            fp.write("\n")
-            print("\n")
+                self.logOutputArea.append("{:3d}({:.3f}) ".format(self.nboCtr[j,i]+1,vocc))
 
-        fp.write("residual density: {:5.6f}\n".format(self.DMNAO.trace()))
-        print("residual density: {:5.6f}\n".format(self.DMNAO.trace()))
-        print("--------------------------")
-        fp.close()
+        self.logOutputArea.append("residual density: {:5.6f}".format(self.DMNAO.trace()))
+        self.logOutputArea.append("--------------------------")
 
     def nboPlotMolden(self):
         AONAO = self.__readMatrix(self.__nboFile,"AONAO")
@@ -181,7 +161,7 @@ class AdNDP:
             resid -= Cnt
             k += 1
 
-        print("Read "+matrix+" matrixs in nbofile OK!")
+        self.logOutputArea.append("Read "+matrix+" matrixs in nbofile OK!")
         fp.close()
         return Matrix
 
@@ -269,14 +249,6 @@ class AdNDP:
         return indF
 
 
-if __name__ == "__main__":
-    start = time.time()
-    a = AdNDP("AdNDP.ini")
-    a.partition()
-    a.output()
-    a.nboPlotMolden()
-    end = time.time()
-    print("total time:",end-start)
 
 
 
