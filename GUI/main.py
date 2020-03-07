@@ -1,21 +1,23 @@
-from PyQt5.Qt import QWidget,QFileDialog,QApplication,QProgressBar,QMessageBox
-from resource.ui.Ui_mainWindow import Ui_Form
+from PyQt5.Qt import QWidget, QFileDialog, QApplication, QProgressBar, QMessageBox, QMainWindow
+from resource.ui.Ui_mainWindowUi import Ui_MainWindow
 from AdNDP import AdNDP
 
-class Window(QWidget,Ui_Form):
+
+class Window(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
 
     def readInitFile(self):
-        path = QFileDialog.getOpenFileName(self,"请选择初始化文件","../example","Init Files (*.ini);;All Files (*)")[0]
+        path = QFileDialog.getOpenFileName(
+            self, "请选择初始化文件", "../example", "Init Files (*.ini);;All Files (*)")[0]
         #path = 'C:/Source/Graduation Design/AdNDP/AdNDP/GUI/resource/profile/AdNDP.ini'
         if path != '':
-            self.AdNDP = AdNDP(path,self.output_td)
+            self.AdNDP = AdNDP(path, self.output_td)
             self.readInitFile_btn.setEnabled(False)
             self.analysis_btn.setEnabled(True)
         else:
-            QMessageBox.critical(self,"Error!","Please pick a file!")
+            QMessageBox.critical(self, "Error!", "Please pick a file!")
 
     def adndpAnalysis(self):
         self.analysis_btn.setEnabled(False)
@@ -33,9 +35,6 @@ class Window(QWidget,Ui_Form):
         self.output_td.clear()
         self.readInitFile_btn.setEnabled(True)
         self.clear_btn.setEnabled(False)
-
-
-
 
 
 if __name__ == '__main__':
