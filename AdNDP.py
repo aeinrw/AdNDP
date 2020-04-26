@@ -6,26 +6,48 @@ import time
 
 class AdNDP:
 
-    def __init__(self, initFile, logOutputArea):
+    def __init__(self, nboFile, logOutputArea):
         self.logOutputArea = logOutputArea
+        self.__nboFile = nboFile
+        self.__readFile()
 
-        cf = configparser.ConfigParser()
-        cf.read(initFile)
-        sections = cf.sections()[0]
-        self.NAt = cf.getint(sections, "NAt")
-        self.NBf = cf.getint(sections, "NBf")
-        self.AtBs = np.array(
-            cf.get(sections, "AtBs").split(','), dtype=np.int32)
-        self.Thr = np.array(
-            cf.get(sections, "Thr").split(','), dtype=np.float64)
-
+    def __readFile(self):
         self.logOutputArea.append("<h1>读取文件中...</h1>")
-        self.logOutputArea.append("原子总数:{:d}".format(self.NAt))
-        self.logOutputArea.append("原子轨道总数:{:d}".format(self.NBf))
-        self.logOutputArea.append("每个原子的轨道总数:"+str(self.AtBs))
-        self.logOutputArea.append("占据数阈值"+str(self.Thr))
+        fp = open(self.__nboFile, 'r')
 
-        self.__nboFile = cf.get(sections, "nbofile")
+        dtln = fp.readline()
+        while dtln[:9] != ' Charge =':
+            dtln = fp.readline()
+
+        NAt = 0
+        dtln = fp.readline()
+        while (dtln[:2]).lstrip() != '':
+            NAt += 1
+            dtln = fp.readline()
+
+        while dtln[:20] != " NATURAL POPULATIONS":
+            dtln = fp.readline()
+
+        fp.readline()
+        fp.readline()
+        fp.readline()
+
+        AtBs = []
+        for i in range(NAt):
+            dtln = fp.readline()
+            atom = dtln[9:11]
+            num = 0
+            while dtln != '\n':
+                num += 1
+                dtln = fp.readline()
+            AtBs.append(num)
+
+        fp.close()
+
+        self.NAt = NAt
+        self.AtBs = np.array(AtBs)
+        self.NBf = np.sum(AtBs)
+        self.Thr = np.array([0.1]*self.NAt)
         self.__AtBsRng = np.zeros((self.NAt, 2), dtype=np.int32)
         j = 0
         for i in range(self.NAt):
@@ -33,6 +55,49 @@ class AdNDP:
             j += self.AtBs[i]
             self.__AtBsRng[i, 1] = j
         self.DMNAO = self.__readMatrix(self.__nboFile, "DMNAO")
+
+        self.logOutputArea.append("原子总数:{:d}".format(self.NAt))
+        self.logOutputArea.append("原子轨道总数:{:d}".format(self.NBf))
+        self.logOutputArea.append("每个原子的轨道总数:"+str(self.AtBs))
+        self.logOutputArea.append("占据数阈值" + str(self.Thr))
+
+    def __readMatrix(self, nboFile, matrix):
+        if matrix == 'DMNAO':
+            string = " NAO density matrix:"
+        elif matrix == "AONAO":
+            string = " NAOs in the AO basi"
+
+        fp = open(nboFile, 'r')
+        Matrix = np.zeros((self.NBf, self.NBf), dtype=np.float64)
+
+        dtln = ""
+        while dtln[:20] != string:
+            dtln = fp.readline()
+        dtln = fp.readline()
+        dtln = fp.readline()
+        dtln = fp.readline()
+        resid = self.NBf
+        k = 0
+        Cnt = 0
+        while resid > 0:
+            if resid < 8:
+                Cnt = resid
+            else:
+                Cnt = 8
+            for i in range(self.NBf):
+                line = fp.readline()[17:].replace("  ", " ").split(" ")
+                if line[0] == '':
+                    line.pop(0)
+                Matrix[i, 8*k:8*k+Cnt] = np.array(line, dtype=np.float64)
+            dtln = fp.readline()
+            dtln = fp.readline()
+            dtln = fp.readline()
+            resid -= Cnt
+            k += 1
+
+        self.logOutputArea.append("读取"+matrix+"矩阵成功")
+        fp.close()
+        return Matrix
 
     def partition(self):
 
@@ -139,44 +204,6 @@ class AdNDP:
             fp.write('\n')
 
         fp.close()
-
-    def __readMatrix(self, nboFile, matrix):
-        if matrix == 'DMNAO':
-            string = " NAO density matrix:"
-        elif matrix == "AONAO":
-            string = " NAOs in the AO basi"
-
-        fp = open(nboFile, 'r')
-        Matrix = np.zeros((self.NBf, self.NBf), dtype=np.float64)
-
-        dtln = ""
-        while dtln[:20] != string:
-            dtln = fp.readline()
-        dtln = fp.readline()
-        dtln = fp.readline()
-        dtln = fp.readline()
-        resid = self.NBf
-        k = 0
-        Cnt = 0
-        while resid > 0:
-            if resid < 8:
-                Cnt = resid
-            else:
-                Cnt = 8
-            for i in range(self.NBf):
-                line = fp.readline()[17:].replace("  ", " ").split(" ")
-                if line[0] == '':
-                    line.pop(0)
-                Matrix[i, 8*k:8*k+Cnt] = np.array(line, dtype=np.float64)
-            dtln = fp.readline()
-            dtln = fp.readline()
-            dtln = fp.readline()
-            resid -= Cnt
-            k += 1
-
-        self.logOutputArea.append("读取"+matrix+"矩阵成功")
-        fp.close()
-        return Matrix
 
     def __subsets(self, NCtr):
         AtBlQnt = int(comb(self.NAt, NCtr))

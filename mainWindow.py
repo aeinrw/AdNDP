@@ -1,5 +1,5 @@
 from PyQt5.Qt import QWidget, QFileDialog, QApplication, QProgressBar, QMessageBox, QMainWindow
-from resource.ui.Ui_mainWindowUi import Ui_MainWindow
+from Ui_mainWindowUi import Ui_MainWindow
 from AdNDP import AdNDP
 
 
@@ -10,7 +10,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def openFile(self):
         path = QFileDialog.getOpenFileName(
-            self, "请选择初始化文件", "../example", "Init Files (*.ini);;All Files (*)")[0]
+            self, "请选择初始化文件", "./example", "NBO Files (*.log);;All Files (*)")[0]
         if path != '':
             self.AdNDP = AdNDP(path, self.output_td)
         else:
