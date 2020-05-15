@@ -1,22 +1,17 @@
 import numpy as np
+import configparser
 from scipy.special import comb
-from PyQt5.QtCore import QObject, pyqtSignal
+import time
 
 
-class AdNDP(QObject):
+class AdNDP:
 
-    informationSignal = pyqtSignal(str)
-    logSignal = pyqtSignal(str)
-    resultSignal = pyqtSignal(str)
-
-    setMaximumSignal = pyqtSignal(int)
-    setValueSignal = pyqtSignal(int)
-
-    def __init__(self):
-        super(AdNDP, self).__init__()
-
-    def readFile(self, nboFile):
+    def __init__(self, nboFile):
         self.__nboFile = nboFile
+        self.__readFile()
+
+    def __readFile(self):
+        print("读取文件中...")
         fp = open(self.__nboFile, 'r')
 
         dtln = fp.readline()
@@ -46,36 +41,25 @@ class AdNDP(QObject):
                 dtln = fp.readline()
             AtBs.append(num)
 
-        while dtln[:12].strip() != "* Total *":
-            dtln = fp.readline()
-
-        self.NEl = int(float(dtln[59:].strip()))
-
         fp.close()
 
         self.NAt = NAt
         self.AtBs = np.array(AtBs)
         self.NBf = np.sum(AtBs)
-        self.Thr = np.array([0.1] * self.NAt)
+        # self.Thr = np.array([0.1]*self.NAt)
+        self.Thr = np.array([0.1, 0.1, 0.1, 0.1, 0.1])
         self.__AtBsRng = np.zeros((self.NAt, 2), dtype=np.int32)
         j = 0
         for i in range(self.NAt):
             self.__AtBsRng[i, 0] = j
             j += self.AtBs[i]
             self.__AtBsRng[i, 1] = j
+        self.DMNAO = self.__readMatrix(self.__nboFile, "DMNAO")
 
-        self.informationSignal.emit("<b>原子总数:</b>{:d}".format(self.NAt))
-        self.informationSignal.emit("<b>电子总数:</b>{:d}".format(self.NEl))
-        self.informationSignal.emit("<b>原子轨道总数:</b>{:d}".format(self.NBf))
-        self.informationSignal.emit("<b>每个原子的轨道总数:</b>"+str(self.AtBs))
-        self.informationSignal.emit("<b>占据数阈值:</b>" + str(self.Thr))
-
-        self.setMaximumSignal.emit(int(self.NEl/2))
-
-    def setThreshold(self, nums):
-        self.Thr = np.array([0.1] * self.NAt)
-        self.Thr[nums] = 0
-        self.informationSignal.emit("<b>占据数阈值:</b>" + str(self.Thr))
+        print("原子总数:{:d}".format(self.NAt))
+        print("原子轨道总数:{:d}".format(self.NBf))
+        print("每个原子的轨道总数:"+str(self.AtBs))
+        print("占据数阈值" + str(self.Thr))
 
     def __readMatrix(self, nboFile, matrix):
         if matrix == 'DMNAO':
@@ -111,12 +95,13 @@ class AdNDP(QObject):
             resid -= Cnt
             k += 1
 
+        print("读取" + matrix + "矩阵成功")
         fp.close()
         return Matrix
 
     def partition(self):
-        self.DMNAO = self.__readMatrix(self.__nboFile, "DMNAO")
 
+        print("分析中...")
         prelOcc = np.zeros(self.NBf, dtype=np.float64)
         prelVec = np.zeros((self.NBf, self.NBf), dtype=np.float64)
         prelCtr = np.ones((self.NAt, self.NBf), dtype=np.int32)
@@ -129,19 +114,15 @@ class AdNDP(QObject):
 
         indS, indF = 0, 0
         nboAmnt = 0
-        sumCounter = 0
-
-        self.logSignal.emit("--------------------开始分析--------------------")
 
         for NCtr in range(1, self.NAt+1):
             threshold = self.Thr[NCtr-1]
             if threshold == 0.0:
-                self.logSignal.emit("<b>跳过{:d}c-2e......</b>".format(NCtr))
+                print("跳过{:d}c-2e".format(NCtr))
                 continue
 
             AtBl, AtBlQnt = self.__subsets(NCtr)
-            self.logSignal.emit(
-                "<b>搜索{:d}c-2e中......</b>".format(NCtr))
+            print("搜索{:d}c-2e中......".format(NCtr))
 
             counter = 0
 
@@ -167,10 +148,7 @@ class AdNDP(QObject):
                         counter += 1
                         a = self.nboVec[:, i]
                         self.DMNAO -= self.nboOcc[i]*np.outer(a, a)
-                        self.logSignal.emit(
-                            "    找到第{:d}个{:d}c-2e轨道".format(counter, NCtr))
-                        sumCounter += 1
-                        self.setValueSignal.emit(sumCounter)
+                        print("    找到第{:d}个{:d}c-2e轨道".format(counter, NCtr))
                     indS = indF
                     nboAmnt = indF
                     PP = 0
@@ -179,47 +157,35 @@ class AdNDP(QObject):
                 if Cnt > 20:
                     break
 
-        self.logSignal.emit("--------------------分析结束--------------------")
-
         self.nboAmnt = nboAmnt
+        print("分析结束")
         return nboAmnt
 
     def output(self):
-        self.resultSignal.emit(
-            "-----------------------------分析结果-----------------------------")
-        self.resultSignal.emit(
-            "<b>轨道总数为 {:d}</b>".format(self.nboAmnt))
-
-        nc = np.sum(self.nboCtr != -1, axis=0)
-
+        print("分析结果如下")
+        print("轨道总数为{:d}".format(self.nboAmnt))
         for i in range(self.nboAmnt):
-            string = "第{:2d}个({:d}c-<b>{:.3f}</b>e):".format(
-                i+1, nc[i], np.sum(self.nboOcc[i]))
-            for j in range(nc[i]):
+            nc = np.sum(self.nboCtr[:, i] != -1)
+            string = "第{:d}个轨道({:d}中心,{:.3f}电子):".format(
+                i+1, nc, np.sum(self.nboOcc[i]))
+            #print("bond {:3d} ({:2d} center,{:.3f} e):".format(i+1,nc,np.sum(self.nboOcc[i])))
+            for j in range(nc):
                 m = self.nboCtr[j, i]
                 n1 = self.__AtBsRng[m, 0]
                 n2 = self.__AtBsRng[m, 1]
                 vocc = self.nboOcc[i]*(np.sum((self.nboVec[:, i]**2)[n1:n2]))
-                string += "{:3d}(<b>{:.3f}</b>) ".format(
+                string += "{:3d}({:.3f}) ".format(
                     self.nboCtr[j, i]+1, vocc)
-            self.resultSignal.emit(string)
+                #print("{:3d}({:.3f}) ".format(self.nboCtr[j,i]+1,vocc))
+            print(string)
 
-        sumnc = np.bincount(nc)
-        for i in range(1, sumnc.shape[0]):
-            if sumnc[i] != 0:
-                self.resultSignal.emit(
-                    "<b>{:d}中心的轨道有{:d}个<b>".format(i, sumnc[i]))
+        print("矩阵剩余:{:5.6f}".format(self.DMNAO.trace()))
 
-        self.resultSignal.emit(
-            "<b>矩阵剩余:{:5.6f}</b>".format(self.DMNAO.trace()))
-        self.resultSignal.emit(
-            "------------------------------------------------------------------")
-
-    def nboPlotMolden(self, path):
+    def nboPlotMolden(self):
         AONAO = self.__readMatrix(self.__nboFile, "AONAO")
         nboVecAO = AONAO@self.nboVec
 
-        fp = open(path, 'w')
+        fp = open("adndp.log", 'w')
         resid = self.nboAmnt
         k = 0
         while resid > 0:
@@ -316,3 +282,10 @@ class AdNDP(QObject):
             indF += 1
 
         return indF
+
+
+if __name__ == "__main__":
+    Li5 = AdNDP("./example/Li5+.log")
+    Li5.partition()
+    Li5.output()
+    Li5.nboPlotMolden()
