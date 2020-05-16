@@ -1,6 +1,26 @@
 from Ui_setting import Ui_Form
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCheckBox
-from PyQt5.QtCore import pyqtSlot, pyqtSignal, Qt
+from PyQt5.QtWidgets import QWidget, QCheckBox, QHBoxLayout, QDoubleSpinBox, QSizePolicy
+from PyQt5.QtCore import pyqtSlot, pyqtSignal, Qt, QObject
+
+
+class MyWidget(QHBoxLayout):
+    def __init__(self, i):
+        super(MyWidget, self).__init__()
+
+        self.checkBox = QCheckBox('{:2d}c-2e'.format(i + 1))
+        self.doubleSpinBox = QDoubleSpinBox()
+        self.addWidget(self.checkBox)
+        self.addWidget(self.doubleSpinBox)
+        self.set()
+
+    def set(self):
+
+        self.checkBox.setChecked(True)
+        self.doubleSpinBox.setMaximum(2.0)
+        self.doubleSpinBox.setMinimum(0.0)
+        self.doubleSpinBox.setSingleStep(0.1)
+        self.doubleSpinBox.setValue(0.1)
+        self.checkBox.clicked['bool'].connect(self.doubleSpinBox.setEnabled)
 
 
 class SettingWindow(QWidget, Ui_Form):
@@ -13,19 +33,20 @@ class SettingWindow(QWidget, Ui_Form):
 
         self.n = n
         self.verticalLayout.setAlignment(Qt.AlignCenter)
-        self.checkBoxList = []
+        self.widgetList = []
         for i in range(self.n):
-            self.checkBoxList.append(
-                QCheckBox('{:d}c-2e'.format(i+1), self.groupBox))
-            self.checkBoxList[i].setChecked(True)
-            self.verticalLayout.addWidget(self.checkBoxList[i])
+            self.widgetList.append(MyWidget(i))
+            self.verticalLayout.addLayout(self.widgetList[i])
 
     @pyqtSlot()
     def on_pushButton_clicked(self):
         result = []
         for i in range(self.n):
-            result.append(not self.checkBoxList[i].isChecked())
-        print(result)
+            flag = self.widgetList[i].checkBox.isChecked()
+            if flag == True:
+                result.append(self.widgetList[i].doubleSpinBox.value())
+            else:
+                result.append(0)
         self.resultSignal.emit(result)
 
 

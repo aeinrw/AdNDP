@@ -179,7 +179,7 @@ class AdNDP:
                 #print("{:3d}({:.3f}) ".format(self.nboCtr[j,i]+1,vocc))
             print(string)
 
-        print("矩阵剩余:{:5.6f}".format(self.DMNAO.trace()))
+        print("电子剩余:{:5.6f}".format(self.DMNAO.trace()))
 
     def nboPlotMolden(self):
         AONAO = self.__readMatrix(self.__nboFile, "AONAO")

@@ -43,6 +43,7 @@ class Window(QMainWindow, Ui_MainWindow):
         # path = "./example/Li5+.log"
         if path != '':
             self.AdNDP.readFile(path)
+            self.progressBar.setValue(0)
             self.startAnalysisAct.setEnabled(True)
             self.settingAct.setEnabled(True)
         else:
@@ -88,6 +89,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.informationTextEdit.clear()
         self.logTextEdit.clear()
 
+        self.progressBar.setValue(0)
         self.startAnalysisAct.setEnabled(False)
         self.exportFileAct.setEnabled(False)
         self.settingAct.setEnabled(False)

@@ -73,8 +73,7 @@ class AdNDP(QObject):
         self.setMaximumSignal.emit(int(self.NEl/2))
 
     def setThreshold(self, nums):
-        self.Thr = np.array([0.1] * self.NAt)
-        self.Thr[nums] = 0
+        self.Thr = np.array(nums)
         self.informationSignal.emit("<b>占据数阈值:</b>" + str(self.Thr))
 
     def __readMatrix(self, nboFile, matrix):
@@ -211,7 +210,7 @@ class AdNDP(QObject):
                     "<b>{:d}中心的轨道有{:d}个<b>".format(i, sumnc[i]))
 
         self.resultSignal.emit(
-            "<b>矩阵剩余:{:5.6f}</b>".format(self.DMNAO.trace()))
+            "<b>电子剩余:{:5.6f}</b>".format(self.DMNAO.trace()))
         self.resultSignal.emit(
             "------------------------------------------------------------------")
 
